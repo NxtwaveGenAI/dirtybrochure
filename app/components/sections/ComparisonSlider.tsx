@@ -130,11 +130,9 @@ export function ComparisonSlider() {
       <div className="comparison-slider" id="compSlider" ref={sliderRef}>
         <div className="comparison-side reality" ref={realityRef}>
           <div className="comparison-img img-reality"></div>
-          <div className="comparison-label">THE REALITY // NO EQUIPMENT, RUSTING LAB</div>
         </div>
         <div className="comparison-side brochure">
           <div className="comparison-img img-brochure"></div>
-          <div className="comparison-label">THE BROCHURE // "STATE OF THE ART FACILITIES"</div>
         </div>
         <div className="comparison-handle" ref={handleRef}>
           <div className="handle-line"></div>

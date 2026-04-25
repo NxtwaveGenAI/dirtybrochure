@@ -55,11 +55,7 @@ export function Intro() {
         Drop in Friday.
       </p>
 
-      <div className="intro-meta">
-        <span className="file-no">FILE №/ DB-2026-014</span>
-        <span>CLEARANCE: PUBLIC</span>
-        <span className="live">STATUS: ONGOING</span>
-      </div>
+
 
       <div className="intro-cta">
         <a href="#investigations" className="btn btn-primary" data-hover="true" data-magnetic="true">READ THE FILES →</a>

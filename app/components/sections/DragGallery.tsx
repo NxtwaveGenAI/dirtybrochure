@@ -120,18 +120,7 @@ export function DragGallery() {
 
   return (
     <>
-      <div className="marquee">
-        <div className="marquee-track">
-          {[1,2].map((i) => (
-            <span key={i} style={{ display: 'inline-flex', alignItems: 'center', gap: '60px' }}>
-              <span className="marquee-item">NO PAID REVIEWS <span className="sep">✦</span></span>
-              <span className="marquee-item stroke">ONLY RECEIPTS <span className="sep">✦</span></span>
-              <span className="marquee-item">NAMES NAMED <span className="sep">✦</span></span>
-              <span className="marquee-item stroke">LIES EXPOSED <span className="sep">✦</span></span>
-            </span>
-          ))}
-        </div>
-      </div>
+
 
       <section className="drag-section" id="investigations" ref={sectionRef}>
         <div className="drag-header">
@@ -146,69 +135,51 @@ export function DragGallery() {
           <div className="drag-track" id="dragTrack" ref={trackRef}>
             <article className="case featured" data-hover="true">
               <div className="case-no">CASE FILE № DB-014 // TELANGANA</div>
-              <span className="watermark">TOP READ</span>
               <h3>VNR VJIET: The "Tier 1.5" nobody explains</h3>
               <p>Placement numbers averaged a little too conveniently. We pulled five years of NIRF data, cross-checked with 47 recent graduates on LinkedIn, and walked the campus unannounced on a Wednesday afternoon.</p>
-              <div className="tags">
-                <span className="tag flag">NIRF VERIFIED</span>
-                <span className="tag">47 INTERVIEWS</span>
-                <span className="tag">ON-SITE</span>
-              </div>
-              <div className="bottom"><span>23 min · 2.1M views</span><span className="open">OPEN FILE ►</span></div>
+              <div className="bottom"><span className="open">OPEN FILE ►</span></div>
             </article>
 
             <article className="case" data-hover="true">
               <div className="case-no">CASE FILE № DB-013</div>
               <h3>CBIT: Actually worth the tag?</h3>
               <p>Autonomous. Government-affiliated. Cutoffs that make parents cry. But is the classroom experience matching the rank it demands? We audited six departments.</p>
-              <div className="tags">
-                <span className="tag">6 DEPTS AUDITED</span>
-                <span className="tag">CUTOFFS</span>
-              </div>
-              <div className="bottom"><span>19 min · 880K</span><span className="open">OPEN ►</span></div>
+              <div className="bottom"><span className="open">OPEN ►</span></div>
             </article>
 
             <article className="case" data-hover="true">
               <div className="case-no">№ DB-012</div>
               <h3>The "deemed" trap</h3>
               <p>A growing class of private universities selling dreams at ₹22L+. What "deemed-to-be" actually means — and doesn't.</p>
-              <div className="tags"><span className="tag flag">RED FLAG</span></div>
-              <div className="bottom"><span>27 min · 1.4M</span><span className="open">OPEN ►</span></div>
+              <div className="bottom"><span className="open">OPEN ►</span></div>
             </article>
 
             <article className="case" data-hover="true">
               <div className="case-no">№ DB-011</div>
               <h3>CVR: The mixed bag</h3>
               <p>Placements are real. The hostel food isn't. We break down what's worth the fee and what's absolutely not.</p>
-              <div className="tags"><span className="tag">STUDENT VOICES</span></div>
-              <div className="bottom"><span>15 min · 620K</span><span className="open">OPEN ►</span></div>
+              <div className="bottom"><span className="open">OPEN ►</span></div>
             </article>
 
             <article className="case" data-hover="true">
               <div className="case-no">№ DB-010</div>
               <h3>Fake placement posters</h3>
               <p>Six colleges. Same stock photo of "our student at Google." We tracked down who that actually is.</p>
-              <div className="tags"><span className="tag flag">INVESTIGATION</span></div>
-              <div className="bottom"><span>21 min · 3.2M</span><span className="open">OPEN ►</span></div>
+              <div className="bottom"><span className="open">OPEN ►</span></div>
             </article>
 
             <article className="case" data-hover="true">
               <div className="case-no">CASE FILE № DB-009</div>
               <h3>EAMCET: The college you should've picked</h3>
               <p>We ranked 34 Hyderabad colleges by what actually matters — not by who paid a counselling platform to feature them first.</p>
-              <div className="tags">
-                <span className="tag">34 COLLEGES</span>
-                <span className="tag">EAMCET</span>
-              </div>
-              <div className="bottom"><span>38 min · 4.3M</span><span className="open">OPEN ►</span></div>
+              <div className="bottom"><span className="open">OPEN ►</span></div>
             </article>
 
             <article className="case" data-hover="true">
               <div className="case-no">№ DB-008</div>
               <h3>"NAAC A++" means nothing</h3>
               <p>How the accreditation became a marketing sticker — and the three things parents should actually ask instead.</p>
-              <div className="tags"><span className="tag flag">EXPOSÉ</span></div>
-              <div className="bottom"><span>17 min · 1.2M</span><span className="open">OPEN ►</span></div>
+              <div className="bottom"><span className="open">OPEN ►</span></div>
             </article>
           </div>
         </div>

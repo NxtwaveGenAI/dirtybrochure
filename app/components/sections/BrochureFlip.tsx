@@ -175,20 +175,9 @@ export function BrochureFlip() {
           <p>Keep scrolling. Each page of the glossy prospectus flips to reveal what we actually found. Don't look away.</p>
         </div>
 
-        <div className="brochure-hud" id="brochureHud">
-          <div className="hud-label">▸ FLIPPING THROUGH</div>
-          {["01 · PLACEMENTS", "02 · FACULTY", "03 · INFRA", "04 · PARTNERS"].map((label, i) => (
-            <div key={i} className={`hud-row ${i < flippedCount ? "done" : ""} ${i === flippedCount ? "active" : ""}`}>
-              <span className="hud-dot"></span><span>{label}</span>
-            </div>
-          ))}
-        </div>
 
-        <div className="brochure-counter-big">
-          <span className="current" id="brochCurrent">{String(flippedCount).padStart(2, "0")}</span>
-          <span className="total">/ 04</span>
-          <span className="label">PAGES TURNED</span>
-        </div>
+
+
 
         <div className="brochure-progress-top">
           <div className="labels">
