@@ -1,0 +1,3463 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DIRTY BROCHURE — The Truth They Don't Print</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Special+Elite&family=Archivo+Black&family=JetBrains+Mono:wght@400;700&family=Anton&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0b;
+    --bg-2: #111114;
+    --bg-card: #15151a;
+    --bg-elevated: #1a1a20;
+    --border: #22222a;
+    --border-2: #33333d;
+    --border-3: #44444f;
+    --ink: #f2f2f2;
+    --ink-2: #8c8c96;
+    --ink-3: #4a4a54;
+    --blood: #ff2d1f;
+    --blood-soft: #ff5a4e;
+    --warning: #ffd60a;
+    --toxic: #c4ff3d;
+    --ease: cubic-bezier(0.65, 0, 0.35, 1);
+    --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+    --ease-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  ::selection { background: var(--blood); color: #000; }
+  ::-webkit-scrollbar { width: 10px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border-2); }
+  ::-webkit-scrollbar-thumb:hover { background: var(--blood); }
+
+  html { -webkit-font-smoothing: antialiased; }
+
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: 'Special Elite', 'Courier New', monospace;
+    overflow-x: hidden;
+    position: relative;
+    cursor: none;
+  }
+
+  body.loading { overflow: hidden; height: 100vh; }
+  body.dragging { cursor: grabbing !important; }
+
+  /* ========== DESIGN SYSTEM ========== */
+  .eyebrow {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--blood);
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 28px;
+  }
+  .eyebrow::before {
+    content: "";
+    width: 44px;
+    height: 2px;
+    background: var(--blood);
+    box-shadow: 0 0 12px var(--blood);
+  }
+  .eyebrow .num {
+    color: var(--ink-3);
+    font-size: 10px;
+    letter-spacing: 0.25em;
+    margin-right: 4px;
+  }
+
+  .section-h2 {
+    font-family: 'Anton', sans-serif;
+    font-size: clamp(56px, 8vw, 120px);
+    line-height: 0.88;
+    letter-spacing: -0.02em;
+    text-transform: uppercase;
+    margin-bottom: 32px;
+    max-width: 1100px;
+  }
+  .section-h2 em {
+    font-family: 'Instrument Serif', serif;
+    font-style: italic;
+    color: var(--blood);
+    font-weight: 400;
+  }
+
+  .section-desc {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 14px;
+    line-height: 1.75;
+    color: var(--ink-2);
+    max-width: 560px;
+  }
+
+  .section-pad {
+    padding: 140px 40px;
+  }
+
+  /* Unified section divider — appears between sections */
+  .section-divider {
+    height: 1px;
+    background: linear-gradient(90deg, transparent 0%, var(--border-2) 30%, var(--border-2) 70%, transparent 100%);
+    margin: 0 40px;
+    position: relative;
+    z-index: 10;
+  }
+
+  /* ========== CUSTOM CURSOR ========== */
+  .cursor {
+    position: fixed;
+    width: 8px;
+    height: 8px;
+    background: var(--blood);
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 10000;
+    transform: translate(-50%, -50%);
+    mix-blend-mode: difference;
+    transition: width 0.3s var(--ease), height 0.3s var(--ease);
+  }
+  .cursor-ring {
+    position: fixed;
+    width: 40px;
+    height: 40px;
+    border: 1px solid var(--ink);
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 9999;
+    transform: translate(-50%, -50%);
+    transition: width 0.4s var(--ease), height 0.4s var(--ease), border-color 0.3s var(--ease), background 0.3s var(--ease);
+    mix-blend-mode: difference;
+  }
+  .cursor.active { width: 0; height: 0; }
+  .cursor-ring.active { width: 90px; height: 90px; border-color: var(--blood); }
+  .cursor-ring.drag {
+    width: 110px; height: 110px;
+    background: var(--blood);
+    border-color: var(--blood);
+    mix-blend-mode: normal;
+  }
+  .cursor-ring.reveal { width: 300px; height: 300px; border-color: var(--warning); mix-blend-mode: normal; border-width: 2px; }
+
+  .cursor-label {
+    position: fixed;
+    pointer-events: none;
+    z-index: 10001;
+    font-family: 'Archivo Black', sans-serif;
+    font-size: 10px;
+    letter-spacing: 0.3em;
+    color: var(--ink);
+    transform: translate(-50%, -50%);
+    opacity: 0;
+    transition: opacity 0.2s;
+    mix-blend-mode: difference;
+  }
+  .cursor-label.active { opacity: 1; }
+
+  /* ========== AMBIENT ========== */
+  .noise {
+    position: fixed; inset: 0; pointer-events: none; z-index: 1;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 0.06 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+    opacity: 0.7;
+    mix-blend-mode: screen;
+  }
+  .scanlines {
+    position: fixed; inset: 0; pointer-events: none; z-index: 2;
+    background: repeating-linear-gradient(0deg, transparent 0, transparent 2px, rgba(255,255,255,0.012) 2px, rgba(255,255,255,0.012) 3px);
+  }
+  .ambient {
+    position: fixed; inset: 0; pointer-events: none; z-index: 0;
+    background:
+      radial-gradient(ellipse at 20% 30%, rgba(255,45,31,0.05) 0%, transparent 45%),
+      radial-gradient(ellipse at 80% 70%, rgba(255,214,10,0.035) 0%, transparent 40%);
+  }
+
+  /* ========== LOADER ========== */
+  .loader {
+    position: fixed; inset: 0; background: #000;
+    z-index: 9000;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 40px;
+  }
+  .loader-text {
+    font-family: 'Anton', sans-serif;
+    font-size: clamp(80px, 16vw, 240px);
+    line-height: 0.85;
+    letter-spacing: -0.02em;
+    text-transform: uppercase;
+    display: flex; gap: 2vw;
+    overflow: hidden;
+  }
+  .loader-text span { display: inline-block; transform: translateY(110%); }
+  .loader-text .red { color: var(--blood); font-family: 'Instrument Serif', serif; font-style: italic; font-weight: 400; }
+  .loader-meta {
+    display: flex; gap: 40px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px; letter-spacing: 0.3em;
+    color: var(--ink-3); text-transform: uppercase;
+  }
+  .loader-meta .percent { color: var(--warning); }
+  .loader-bar {
+    width: min(600px, 80vw);
+    height: 1px;
+    background: var(--border-2);
+    position: relative;
+    overflow: hidden;
+  }
+  .loader-bar-fill {
+    position: absolute;
+    inset: 0;
+    background: var(--blood);
+    transform: scaleX(0);
+    transform-origin: left;
+  }
+
+  /* ========== TAPE ========== */
+  .tape {
+    position: fixed; top: 0; left: 0; right: 0;
+    background: var(--warning); color: #000;
+    font-family: 'Archivo Black', sans-serif;
+    font-size: 11px; letter-spacing: 0.3em;
+    padding: 8px 0;
+    z-index: 100;
+    border-bottom: 2px solid #000;
+    overflow: hidden; white-space: nowrap;
+  }
+  .tape-track {
+    display: inline-block;
+    animation: tape-scroll 40s linear infinite;
+    padding-left: 100%;
+  }
+  @keyframes tape-scroll {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(-100%); }
+  }
+  .tape-track span { margin: 0 30px; }
+  .tape-track .dot { color: var(--blood); }
+
+  /* ========== NAV ========== */
+  nav {
+    position: fixed; top: 33px; left: 0; right: 0;
+    z-index: 50;
+    padding: 18px 40px;
+    display: flex; justify-content: space-between; align-items: center;
+    background: rgba(10, 10, 11, 0.75);
+    border-bottom: 1px dashed var(--border-2);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+  }
+  .logo {
+    font-family: 'Anton', sans-serif;
+    font-size: 24px; letter-spacing: 0.02em;
+    display: flex; align-items: center; gap: 10px;
+    line-height: 0.9;
+  }
+  .logo .badge {
+    background: var(--blood); color: #000;
+    padding: 3px 9px;
+    transform: rotate(-2deg);
+    font-size: 20px;
+    box-shadow: 0 0 20px rgba(255,45,31,0.5);
+  }
+  .nav-links {
+    display: flex; gap: 36px;
+    list-style: none;
+    font-size: 12px; letter-spacing: 0.2em;
+    text-transform: uppercase;
+  }
+  .nav-links a {
+    color: var(--ink-2); text-decoration: none;
+    position: relative;
+    padding: 4px 0;
+    transition: color 0.3s;
+  }
+  .nav-links a:hover { color: var(--ink); }
+  .nav-counter {
+    display: inline-block;
+    font-size: 9px;
+    color: var(--blood);
+    margin-right: 4px;
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .nav-cta {
+    background: var(--blood); color: #000;
+    padding: 11px 22px;
+    font-family: 'Archivo Black', sans-serif;
+    font-size: 11px; letter-spacing: 0.25em;
+    border: none; cursor: none;
+    transform: rotate(-1deg);
+    position: relative; overflow: hidden;
+    transition: transform 0.3s var(--ease);
+  }
+  .nav-cta:hover { transform: rotate(1deg) scale(1.05); }
+
+  /* ========== HERO ========== */
+  .hero {
+    height: 100vh;
+    position: relative;
+    z-index: 10;
+    overflow: hidden;
+    background: #000;
+    cursor: none;
+  }
+
+  .hero-canvas {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    display: block;
+    width: 100%;
+    height: 100%;
+  }
+
+  .hero-hint {
+    position: absolute;
+    bottom: 40px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 12;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.4em;
+    color: var(--ink-3);
+    text-transform: uppercase;
+    pointer-events: none;
+    opacity: 0;
+  }
+
+  .scroll-hint {
+    position: absolute;
+    bottom: 40px; right: 40px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px; letter-spacing: 0.4em;
+    color: var(--ink-3); text-transform: uppercase;
+    display: flex; flex-direction: column; align-items: flex-end; gap: 12px;
+    z-index: 12;
+    pointer-events: none;
+  }
+  .scroll-hint::after {
+    content: "";
+    width: 1px; height: 30px;
+    background: linear-gradient(var(--ink-3), transparent);
+    animation: scroll-drop 2s ease-in-out infinite;
+  }
+  @keyframes scroll-drop {
+    0%, 100% { transform: scaleY(1); transform-origin: top; }
+    50% { transform: scaleY(0.4); transform-origin: bottom; }
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.4; transform: scale(0.8); }
+  }
+
+  /* ========== INTRO SECTION (after hero) ========== */
+  .intro-section {
+    padding: 120px 40px 140px;
+    position: relative;
+    z-index: 10;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+
+  .intro-meta {
+    display: flex;
+    gap: 20px;
+    align-items: center;
+    margin-bottom: 60px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+    flex-wrap: wrap;
+  }
+  .intro-meta .file-no {
+    border: 1px solid var(--border-2);
+    padding: 4px 10px;
+    color: var(--warning);
+  }
+  .intro-meta .live {
+    color: var(--toxic);
+    display: flex; align-items: center; gap: 6px;
+  }
+  .intro-meta .live::before {
+    content: "";
+    width: 6px; height: 6px;
+    background: var(--toxic);
+    border-radius: 50%;
+    box-shadow: 0 0 10px var(--toxic);
+    animation: pulse 1.5s ease-in-out infinite;
+  }
+
+  .intro-sub {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 16px;
+    line-height: 1.8;
+    color: var(--ink-2);
+    max-width: 720px;
+    margin-bottom: 50px;
+  }
+  .intro-sub .hl { background: var(--warning); color: #000; padding: 1px 5px; }
+  .intro-sub .redact {
+    background: var(--ink);
+    color: var(--ink);
+    user-select: none;
+    padding: 0 4px;
+    transition: all 0.3s;
+    cursor: none;
+    position: relative;
+    display: inline-block;
+  }
+  .intro-sub .redact.revealed {
+    background: transparent;
+    color: var(--blood);
+    text-shadow: 0 0 15px rgba(255,45,31,0.4);
+  }
+
+  .intro-cta {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+
+  /* Shared button styles */
+  .btn {
+    padding: 20px 34px;
+    font-family: 'Archivo Black', sans-serif;
+    font-size: 13px; letter-spacing: 0.25em;
+    text-decoration: none; border: none;
+    cursor: none;
+    display: inline-flex; align-items: center; gap: 12px;
+    position: relative; overflow: hidden;
+    transition: transform 0.3s var(--ease);
+  }
+  .btn-primary {
+    background: var(--blood); color: #000;
+    transform: rotate(-0.5deg);
+    box-shadow: 4px 4px 0 var(--ink), 0 0 30px rgba(255,45,31,0.3);
+  }
+  .btn-primary:hover {
+    transform: rotate(0.5deg) translate(-2px, -2px);
+    box-shadow: 6px 6px 0 var(--ink), 0 0 50px rgba(255,45,31,0.6);
+  }
+  .btn-secondary {
+    color: var(--ink);
+    border: 2px solid var(--ink);
+  }
+  .btn-secondary:hover { background: var(--ink); color: #000; }
+
+  /* Verdict pills (used in spotlight + brochure) */
+  .verdict {
+    display: inline-block;
+    margin-top: 10px;
+    padding: 3px 10px;
+    font-family: 'Archivo Black', sans-serif;
+    font-size: 10px; letter-spacing: 0.2em;
+  }
+  .verdict.bad { background: var(--blood); color: #000; }
+  .verdict.mid { background: var(--warning); color: #000; }
+  .verdict.ok { background: var(--toxic); color: #000; }
+
+  /* ========== SPOTLIGHT REVEAL SECTION ========== */
+  .spotlight {
+    height: 100vh;
+    position: relative;
+    z-index: 10;
+    overflow: hidden;
+    background: #000;
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+  }
+  .spotlight-layer {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 100px 60px;
+  }
+  .spotlight-fake-layer { z-index: 1; }
+  .spotlight-real-layer {
+    z-index: 2;
+    clip-path: circle(0px at 50% 50%);
+    -webkit-clip-path: circle(0px at 50% 50%);
+    pointer-events: none;
+    background: #000;
+  }
+  .spotlight-fake, .spotlight-real {
+    font-family: 'Anton', sans-serif;
+    font-size: clamp(36px, 5.5vw, 84px);
+    line-height: 1.08;
+    text-transform: uppercase;
+    text-align: center;
+    max-width: 1100px;
+    letter-spacing: -0.01em;
+  }
+  .spotlight-fake { color: var(--ink); }
+  .spotlight-fake em {
+    font-family: 'Instrument Serif', serif;
+    font-style: italic;
+    color: var(--ink-2);
+    font-weight: 400;
+  }
+  .spotlight-real {
+    color: var(--blood);
+    text-shadow: 0 0 40px rgba(255,45,31,0.35);
+  }
+  .spotlight-real em {
+    font-family: 'Instrument Serif', serif;
+    font-style: italic;
+    color: var(--warning);
+    font-weight: 400;
+  }
+  .spotlight-hint {
+    position: absolute;
+    bottom: 50px; left: 50%;
+    transform: translateX(-50%);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px; letter-spacing: 0.3em;
+    color: var(--ink-3); text-transform: uppercase;
+    pointer-events: none;
+  }
+  .spotlight-hint .key {
+    color: var(--warning);
+    border: 1px solid var(--warning);
+    padding: 3px 10px;
+    margin: 0 6px;
+  }
+  .spotlight-label {
+    position: absolute;
+    top: 50px; left: 50px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px; letter-spacing: 0.3em;
+    color: var(--blood); text-transform: uppercase;
+    display: flex; align-items: center; gap: 14px;
+  }
+  .spotlight-label::before {
+    content: ""; width: 50px; height: 2px;
+    background: var(--blood);
+    box-shadow: 0 0 10px var(--blood);
+  }
+
+  /* ========== MARQUEE ========== */
+  .marquee {
+    padding: 40px 0;
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    background: var(--bg);
+    overflow: hidden;
+    position: relative; z-index: 10;
+  }
+  .marquee-track {
+    display: flex; gap: 60px; white-space: nowrap;
+    will-change: transform;
+  }
+  .marquee-item {
+    font-family: 'Anton', sans-serif;
+    font-size: clamp(48px, 8vw, 120px);
+    line-height: 1; text-transform: uppercase;
+    color: var(--ink);
+    display: inline-flex; align-items: center; gap: 60px;
+  }
+  .marquee-item .sep { color: var(--blood); font-size: 0.6em; }
+  .marquee-item.stroke {
+    -webkit-text-stroke: 2px var(--ink);
+    color: transparent;
+  }
+
+  /* ========== HORIZONTAL DRAG SECTION ========== */
+  .drag-section {
+    padding: 140px 0 100px;
+    position: relative; z-index: 10;
+    overflow: hidden;
+  }
+  .drag-header {
+    padding: 0 40px;
+    margin-bottom: 60px;
+    display: flex; justify-content: space-between; align-items: flex-end;
+    gap: 40px;
+    flex-wrap: wrap;
+  }
+  .drag-header-left {
+    max-width: 700px;
+  }
+  .drag-header .label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px; letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--blood);
+    display: flex; align-items: center; gap: 12px;
+    margin-bottom: 16px;
+  }
+  .drag-header .label::before {
+    content: ""; width: 50px; height: 2px;
+    background: var(--blood);
+    box-shadow: 0 0 12px var(--blood);
+  }
+  .drag-header h2 {
+    font-family: 'Anton', sans-serif;
+    font-size: clamp(48px, 7vw, 100px);
+    line-height: 0.9; text-transform: uppercase;
+  }
+  .drag-header h2 em {
+    font-family: 'Instrument Serif', serif;
+    font-style: italic;
+    color: var(--blood);
+    font-weight: 400;
+  }
+  .drag-header p {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px; line-height: 1.7;
+    color: var(--ink-2);
+    max-width: 360px;
+  }
+
+  .drag-track-wrap {
+    position: relative;
+    cursor: none;
+  }
+  .drag-track {
+    display: flex;
+    gap: 24px;
+    padding: 0 40px;
+    will-change: transform;
+    user-select: none;
+  }
+  .case {
+    flex: 0 0 460px;
+    background: var(--bg-card);
+    border: 1px solid var(--border-2);
+    padding: 36px;
+    position: relative;
+    display: flex; flex-direction: column;
+    transition: border-color 0.4s var(--ease), transform 0.5s var(--ease-out), background 0.4s var(--ease);
+    cursor: none;
+    min-height: 500px;
+  }
+  .case::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border: 1px solid var(--blood);
+    opacity: 0;
+    transition: opacity 0.4s var(--ease);
+    pointer-events: none;
+  }
+  .case:hover {
+    transform: translateY(-8px);
+    background: var(--bg-elevated);
+  }
+  .case:hover::after { opacity: 0.6; }
+  .case.featured {
+    flex: 0 0 540px;
+    background: linear-gradient(135deg, #1c1c22 0%, #0f0f14 100%);
+    border-color: var(--blood);
+    box-shadow: 0 0 60px rgba(255,45,31,0.15);
+  }
+  .case .case-no {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px; letter-spacing: 0.25em;
+    color: var(--ink-3); margin-bottom: 18px;
+  }
+  .case.featured .case-no { color: var(--warning); }
+  .case h3 {
+    font-family: 'Anton', sans-serif;
+    font-size: 36px; line-height: 1;
+    text-transform: uppercase; margin-bottom: 18px;
+    letter-spacing: -0.01em;
+  }
+  .case.featured h3 { font-size: 44px; }
+  .case p {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px; line-height: 1.75;
+    color: var(--ink-2);
+    margin-bottom: 24px; flex: 1;
+  }
+  .case .tags {
+    display: flex; gap: 8px; flex-wrap: wrap;
+    margin-bottom: 22px;
+  }
+  .case .tag {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px; letter-spacing: 0.18em;
+    padding: 5px 10px;
+    background: transparent;
+    border: 1px solid var(--border-2);
+    color: var(--ink-2);
+    text-transform: uppercase;
+    transition: all 0.3s var(--ease);
+  }
+  .case:hover .tag { border-color: var(--border-3); color: var(--ink); }
+  .case .tag.flag {
+    background: var(--blood);
+    border-color: var(--blood);
+    color: #000;
+  }
+  .case .bottom {
+    display: flex; justify-content: space-between; align-items: center;
+    padding-top: 18px;
+    border-top: 1px dashed var(--border-2);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px; color: var(--ink-3);
+  }
+  .case .open {
+    font-family: 'Archivo Black', sans-serif;
+    font-size: 11px; letter-spacing: 0.25em;
+    color: var(--warning);
+    transition: transform 0.3s var(--ease);
+  }
+  .case:hover .open { transform: translateX(4px); }
+  .case.featured .open { color: var(--blood); }
+  .case .watermark {
+    position: absolute;
+    top: 24px; right: 24px;
+    font-family: 'Archivo Black', sans-serif;
+    font-size: 10px; letter-spacing: 0.25em;
+    color: var(--blood);
+    border: 1px solid var(--blood);
+    padding: 4px 10px;
+    box-shadow: 0 0 12px rgba(255,45,31,0.25);
+  }
+
+  .drag-progress {
+    margin: 60px 40px 0;
+    height: 2px;
+    background: var(--border);
+    position: relative;
+  }
+  .drag-progress-fill {
+    height: 100%;
+    background: var(--blood);
+    width: 0;
+    box-shadow: 0 0 10px var(--blood);
+    transform-origin: left;
+  }
+  .drag-progress-meta {
+    display: flex; justify-content: space-between;
+    padding-top: 14px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px; letter-spacing: 0.25em;
+    color: var(--ink-3); text-transform: uppercase;
+  }
+  .drag-progress-meta .right { color: var(--warning); }
+
+  /* ========== REDACTION REVEAL ========== */
+  .redact-section {
+    min-height: 150vh;
+    position: relative; z-index: 10;
+    padding: 140px 40px;
+    background: var(--bg);
+  }
+  .redact-inner {
+    max-width: 1100px;
+    margin: 0 auto;
+    position: sticky;
+    top: 15vh;
+  }
+  .redact-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px; letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--blood);
+    display: flex; align-items: center; gap: 12px;
+    margin-bottom: 30px;
+  }
+  .redact-label::before {
+    content: ""; width: 50px; height: 2px;
+    background: var(--blood);
+    box-shadow: 0 0 12px var(--blood);
+  }
+  .redact-doc {
+    background: var(--bg-card);
+    border: 2px solid var(--border-2);
+    padding: 50px;
+    font-family: 'Special Elite', monospace;
+    font-size: clamp(18px, 2.2vw, 28px);
+    line-height: 1.6;
+    color: var(--ink);
+    position: relative;
+    box-shadow: 0 0 80px rgba(0,0,0,0.6);
+  }
+  .redact-doc::before {
+    content: "INTERNAL MEMO // PROSPECTUS AUDIT";
+    position: absolute;
+    top: -14px; left: 30px;
+    background: var(--warning); color: #000;
+    padding: 4px 14px;
+    font-family: 'Archivo Black', sans-serif;
+    font-size: 11px; letter-spacing: 0.3em;
+  }
+  .redact-doc::after {
+    content: "CLASSIFIED";
+    position: absolute;
+    top: 40px; right: -30px;
+    color: var(--blood);
+    border: 3px double var(--blood);
+    padding: 6px 14px;
+    font-family: 'Archivo Black', sans-serif;
+    font-size: 14px; letter-spacing: 0.2em;
+    transform: rotate(12deg);
+    opacity: 0.7;
+  }
+  .redact-block {
+    display: inline-block;
+    background: var(--ink);
+    color: transparent;
+    padding: 0 4px;
+    transition: background 0.6s var(--ease), color 0.6s var(--ease);
+    user-select: none;
+    position: relative;
+  }
+  .redact-block.revealed {
+    background: transparent;
+    color: var(--blood);
+    text-shadow: 0 0 20px rgba(255,45,31,0.5);
+  }
+  .redact-counter {
+    position: absolute;
+    right: 50px;
+    bottom: 30px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.3em;
+    color: var(--ink-3);
+    text-transform: uppercase;
+  }
+  .redact-counter .n { color: var(--warning); }
+  .redact-hint {
+    text-align: center;
+    margin-top: 30px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px; letter-spacing: 0.3em;
+    color: var(--ink-3); text-transform: uppercase;
+  }
+
+  /* ========== COMPARISON SLIDER ========== */
+  .comparison {
+    padding: 140px 40px;
+    position: relative; z-index: 10;
+    border-top: 1px solid var(--border);
+  }
+  .comparison-header {
+    max-width: 1200px; margin: 0 auto 60px;
+  }
+  .comparison-header .label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px; letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--blood);
+    display: flex; align-items: center; gap: 12px;
+    margin-bottom: 16px;
+  }
+  .comparison-header .label::before {
+    content: ""; width: 50px; height: 2px;
+    background: var(--blood);
+    box-shadow: 0 0 12px var(--blood);
+  }
+  .comparison-header h2 {
+    font-family: 'Anton', sans-serif;
+    font-size: clamp(48px, 7vw, 100px);
+    line-height: 0.9; text-transform: uppercase;
+  }
+  .comparison-header h2 em {
+    font-family: 'Instrument Serif', serif;
+    font-style: italic;
+    color: var(--blood);
+    font-weight: 400;
+  }
+  .comparison-slider {
+    max-width: 1200px;
+    margin: 0 auto;
+    position: relative;
+    height: 500px;
+    overflow: hidden;
+    border: 2px solid var(--border-2);
+    user-select: none;
+    cursor: none;
+  }
+  .comparison-side {
+    position: absolute;
+    inset: 0;
+    padding: 50px;
+    display: flex; flex-direction: column; justify-content: center;
+  }
+  .comparison-side.brochure {
+    background: linear-gradient(135deg, #1a1a20 0%, #0f0f14 100%);
+  }
+  .comparison-side.reality {
+    background: linear-gradient(135deg, #1a0806 0%, #3d0a04 100%);
+    clip-path: inset(0 0 0 50%);
+  }
+  .comparison-side .tag-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px; letter-spacing: 0.3em;
+    text-transform: uppercase;
+    margin-bottom: 20px;
+  }
+  .comparison-side.brochure .tag-label { color: var(--warning); }
+  .comparison-side.reality .tag-label { color: var(--blood); }
+  .comparison-side h3 {
+    font-family: 'Anton', sans-serif;
+    font-size: clamp(32px, 4vw, 56px);
+    line-height: 1; text-transform: uppercase;
+    margin-bottom: 30px;
+    max-width: 80%;
+  }
+  .comparison-side .stat {
+    font-family: 'Anton', sans-serif;
+    font-size: clamp(48px, 6vw, 84px);
+    line-height: 0.9;
+    margin-bottom: 20px;
+  }
+  .comparison-side .stat .unit {
+    color: var(--blood);
+    font-size: 0.5em;
+  }
+  .comparison-side.brochure .stat .unit { color: var(--warning); }
+  .comparison-side .desc {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    line-height: 1.7;
+    color: var(--ink-2);
+    max-width: 70%;
+  }
+  .comparison-handle {
+    position: absolute;
+    top: 0; bottom: 0;
+    width: 2px;
+    background: var(--ink);
+    left: 50%;
+    z-index: 10;
+    pointer-events: none;
+    box-shadow: 0 0 20px rgba(255,255,255,0.3);
+  }
+  .comparison-handle::after {
+    content: "←  DRAG  →";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 80px; height: 80px;
+    background: var(--ink); color: #000;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Archivo Black', sans-serif;
+    font-size: 10px; letter-spacing: 0.15em;
+    box-shadow: 0 0 30px rgba(255,255,255,0.3);
+  }
+  .comparison-caption {
+    max-width: 1200px;
+    margin: 30px auto 0;
+    display: flex;
+    justify-content: space-between;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px; letter-spacing: 0.25em;
+    color: var(--ink-3); text-transform: uppercase;
+  }
+  .comparison-caption .brochure-cap { color: var(--warning); }
+  .comparison-caption .reality-cap { color: var(--blood); }
+
+  /* ========== STATS ========== */
+  .stats {
+    padding: 140px 40px;
+    position: relative; z-index: 10;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 40px;
+    border-top: 1px solid var(--border);
+  }
+  .stat-item {
+    position: relative;
+  }
+  .stat-item .num {
+    font-family: 'Anton', sans-serif;
+    font-size: clamp(80px, 10vw, 160px);
+    line-height: 0.85;
+    color: var(--ink);
+    margin-bottom: 16px;
+  }
+  .stat-item .num .unit { color: var(--blood); font-size: 0.5em; }
+  .stat-item .label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px; letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--ink-2);
+    padding-top: 16px;
+    border-top: 1px solid var(--border-2);
+    line-height: 1.6;
+  }
+
+  /* ========== MANIFESTO ========== */
+  .manifesto {
+    min-height: 100vh;
+    padding: 140px 40px;
+    position: relative; z-index: 10;
+    background: linear-gradient(180deg, var(--bg) 0%, #000 50%, var(--bg) 100%);
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    overflow: hidden;
+  }
+  .manifesto::before {
+    content: "";
+    position: absolute; inset: 0;
+    background-image: repeating-linear-gradient(45deg, transparent, transparent 40px, rgba(255,214,10,0.02) 40px, rgba(255,214,10,0.02) 80px);
+    pointer-events: none;
+  }
+  .manifesto-inner {
+    max-width: 1300px;
+    margin: 0 auto;
+    position: relative;
+  }
+  .manifesto-title {
+    font-family: 'Anton', sans-serif;
+    font-size: clamp(64px, 10vw, 160px);
+    line-height: 0.85;
+    text-transform: uppercase;
+    margin-bottom: 80px;
+  }
+  .manifesto-title .strike {
+    text-decoration: line-through;
+    text-decoration-thickness: 6px;
+    text-decoration-color: var(--blood);
+    color: var(--ink-3);
+  }
+  .manifesto-title em {
+    font-family: 'Instrument Serif', serif;
+    font-style: italic; font-weight: 400;
+    color: var(--warning);
+    text-shadow: 0 0 40px rgba(255,214,10,0.3);
+  }
+  .m-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 50px;
+  }
+  .m-item {
+    border-top: 2px solid var(--ink);
+    padding-top: 24px;
+    position: relative;
+    cursor: none;
+  }
+  .m-item .num {
+    font-family: 'Archivo Black', sans-serif;
+    font-size: 13px; letter-spacing: 0.3em;
+    color: var(--warning);
+    margin-bottom: 14px;
+  }
+  .m-item h4 {
+    font-family: 'Anton', sans-serif;
+    font-size: 32px; text-transform: uppercase;
+    margin-bottom: 16px; line-height: 0.95;
+  }
+  .m-item p {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px; line-height: 1.75;
+    color: var(--ink-2);
+  }
+
+  /* ========== SUBMIT ========== */
+  .submit {
+    padding: 160px 40px;
+    position: relative; z-index: 10;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 80px;
+    align-items: center;
+  }
+  .docs {
+    position: relative;
+    height: 550px;
+  }
+  .doc {
+    position: absolute;
+    background: var(--bg-card);
+    border: 2px solid var(--border-2);
+    padding: 28px;
+    box-shadow: 8px 8px 0 var(--blood);
+    font-family: 'Special Elite', monospace;
+    font-size: 13px; line-height: 1.7;
+    color: var(--ink-2);
+    will-change: transform;
+  }
+  .doc1 { top: 0; left: 40px; width: 70%; transform: rotate(-3deg); z-index: 3; }
+  .doc2 {
+    top: 110px; right: 0; width: 62%;
+    transform: rotate(4deg);
+    background: var(--warning); color: #000;
+    border-color: #000;
+    box-shadow: 8px 8px 0 var(--ink);
+    z-index: 2;
+  }
+  .doc3 { bottom: 30px; left: 0; width: 66%; transform: rotate(-2deg); z-index: 1; }
+  .doc .doc-h {
+    font-family: 'Archivo Black', sans-serif;
+    font-size: 10px; letter-spacing: 0.25em;
+    margin-bottom: 12px; padding-bottom: 10px;
+    border-bottom: 1px solid currentColor;
+    color: var(--toxic);
+  }
+  .doc2 .doc-h { color: #000; }
+  .redact-inline {
+    display: inline-block;
+    height: 14px;
+    background: var(--ink);
+    vertical-align: middle;
+    margin: 0 3px;
+  }
+  .doc2 .redact-inline { background: #000; }
+
+  .submit-text h2 {
+    font-family: 'Anton', sans-serif;
+    font-size: clamp(56px, 7vw, 96px);
+    line-height: 0.9; text-transform: uppercase;
+    margin-bottom: 28px;
+  }
+  .submit-text h2 em {
+    font-family: 'Instrument Serif', serif;
+    font-style: italic; color: var(--blood);
+    border-bottom: 6px solid var(--blood);
+    padding-bottom: 4px;
+    font-weight: 400;
+  }
+  .submit-text p {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 14px; line-height: 1.8;
+    margin-bottom: 36px; max-width: 500px;
+    color: var(--ink-2);
+  }
+  .form {
+    display: flex; flex-direction: column;
+    gap: 14px; max-width: 500px;
+  }
+  .form input, .form textarea, .form select {
+    background: var(--bg-card);
+    border: 2px solid var(--border-2);
+    padding: 16px 18px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px; color: var(--ink);
+    outline: none; cursor: none;
+    transition: all 0.3s var(--ease);
+  }
+  .form input::placeholder, .form textarea::placeholder { color: var(--ink-3); }
+  .form input:focus, .form textarea:focus, .form select:focus {
+    background: #000;
+    border-color: var(--warning);
+    box-shadow: 0 0 0 4px rgba(255,214,10,0.1);
+  }
+  .form textarea { resize: vertical; min-height: 110px; }
+  .form button {
+    background: var(--blood); color: #000;
+    padding: 18px;
+    font-family: 'Archivo Black', sans-serif;
+    font-size: 13px; letter-spacing: 0.3em;
+    border: none; cursor: none;
+    transition: all 0.3s var(--ease);
+  }
+  .form button:hover {
+    box-shadow: 0 0 40px rgba(255,45,31,0.6);
+    transform: translateY(-3px);
+  }
+  .form-note {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px; color: var(--ink-3);
+    margin-top: 8px;
+  }
+
+  /* ========== FOOTER ========== */
+  footer {
+    background: #000;
+    padding: 100px 40px 40px;
+    position: relative; z-index: 10;
+    border-top: 4px double var(--warning);
+    overflow: hidden;
+  }
+  .footer-huge {
+    font-family: 'Anton', sans-serif;
+    font-size: clamp(100px, 18vw, 280px);
+    line-height: 0.85;
+    text-transform: uppercase;
+    margin-bottom: 60px;
+    letter-spacing: -0.02em;
+  }
+  .footer-huge .red {
+    color: var(--blood);
+    font-style: italic;
+    font-family: 'Instrument Serif', serif;
+    font-weight: 400;
+  }
+  .footer-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr 1fr;
+    gap: 40px;
+    margin-bottom: 50px;
+  }
+  .footer-tag {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px; line-height: 1.7;
+    color: var(--ink-2);
+    max-width: 340px;
+  }
+  .footer-col h5 {
+    font-family: 'Archivo Black', sans-serif;
+    font-size: 11px; letter-spacing: 0.3em;
+    margin-bottom: 18px;
+    color: var(--warning);
+  }
+  .footer-col a {
+    display: block;
+    color: var(--ink-2); text-decoration: none;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    margin-bottom: 10px;
+    transition: color 0.2s, transform 0.3s var(--ease);
+  }
+  .footer-col a:hover { color: var(--warning); transform: translateX(6px); }
+  .footer-bottom {
+    padding-top: 30px;
+    border-top: 1px dashed var(--border-2);
+    display: flex; justify-content: space-between;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px; color: var(--ink-3);
+    letter-spacing: 0.15em;
+  }
+  .footer-bottom .legal { max-width: 620px; }
+
+  [data-reveal] { opacity: 0; transform: translateY(40px); }
+  [data-reveal-stagger] > * { opacity: 0; transform: translateY(30px); }
+
+  /* ========== BROCHURE FLIP ========== */
+  .brochure-section {
+    position: relative;
+    z-index: 10;
+    background: radial-gradient(ellipse at center, #141418 0%, var(--bg) 70%);
+    overflow: hidden;
+    border-top: 1px solid var(--border);
+  }
+  .brochure-pin {
+    height: 100vh;
+    width: 100%;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    overflow: hidden;
+  }
+
+  /* Horizontal rail that holds brochure + outro as side-by-side panels.
+     Slides left during the final phase of the scroll timeline. */
+  .brochure-rail {
+    position: relative;
+    display: flex;
+    align-items: center;
+    height: 100%;
+    width: 200vw; /* two full-viewport panels */
+    will-change: transform;
+  }
+  .rail-panel {
+    flex: 0 0 100vw;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    padding: 0 40px;
+  }
+  .rail-panel.outro {
+    background: radial-gradient(ellipse at center, #1a0806 0%, var(--bg) 60%);
+  }
+
+  .brochure-intro {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px;
+    text-align: center;
+    z-index: 30;
+    pointer-events: none;
+    background: radial-gradient(ellipse at center, var(--bg) 0%, var(--bg) 50%, transparent 100%);
+  }
+  .brochure-intro .label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px; letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--blood);
+    display: flex; align-items: center; gap: 12px;
+    margin-bottom: 24px;
+  }
+  .brochure-intro .label::before,
+  .brochure-intro .label::after {
+    content: ""; width: 40px; height: 2px;
+    background: var(--blood);
+    box-shadow: 0 0 12px var(--blood);
+  }
+  .brochure-intro h2 {
+    font-family: 'Anton', sans-serif;
+    font-size: clamp(52px, 8vw, 120px);
+    line-height: 0.9;
+    text-transform: uppercase;
+    max-width: 1000px;
+  }
+  .brochure-intro h2 em {
+    font-family: 'Instrument Serif', serif;
+    font-style: italic;
+    color: var(--blood);
+    font-weight: 400;
+  }
+  .brochure-intro p {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px; line-height: 1.7;
+    color: var(--ink-2);
+    max-width: 480px;
+    margin-top: 28px;
+  }
+  .brochure-intro .scroll-cue {
+    margin-top: 36px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.4em;
+    color: var(--warning);
+    text-transform: uppercase;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+  }
+  .brochure-intro .scroll-cue::after {
+    content: "";
+    width: 1px;
+    height: 40px;
+    background: linear-gradient(var(--warning), transparent);
+    animation: scroll-drop 2s ease-in-out infinite;
+  }
+
+  .brochure-stage {
+    width: min(1200px, 94vw);
+    position: relative;
+    will-change: transform, opacity;
+  }
+  .brochure-book {
+    position: relative;
+    width: 100%;
+    height: min(640px, 70vh);
+    /* NOT preserve-3d at book level — only pages themselves are 3D.
+       This keeps the left static panel & spine in 2D so flipping pages
+       cannot bleed through or overlap them visually. */
+  }
+  .brochure-book::before {
+    content: "";
+    position: absolute;
+    bottom: -50px;
+    left: 5%;
+    right: 5%;
+    height: 40px;
+    background: radial-gradient(ellipse, rgba(0,0,0,0.6) 0%, transparent 70%);
+    filter: blur(20px);
+    z-index: -1;
+  }
+  .brochure-spine {
+    position: absolute;
+    top: 0; bottom: 0;
+    left: 50%;
+    width: 2px;
+    background: linear-gradient(180deg, transparent 0%, rgba(255,45,31,0.4) 50%, transparent 100%);
+    transform: translateX(-50%);
+    z-index: 1;
+    pointer-events: none;
+  }
+
+  /* Right-side container holds the 3D page stack in its own isolated 3D space */
+  .brochure-right {
+    position: absolute;
+    top: 0;
+    left: 50%;
+    width: 50%;
+    height: 100%;
+    perspective: 2800px;
+    transform-style: preserve-3d;
+    z-index: 5;
+  }
+
+  .brochure-page {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    transform-origin: left center;
+    transform-style: preserve-3d;
+    will-change: transform;
+  }
+  .page-face {
+    position: absolute;
+    inset: 0;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+    padding: 50px 44px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  .page-front {
+    background: linear-gradient(135deg, #f8f4e8 0%, #ede6d2 100%);
+    color: #1a1a1a;
+    border-left: 1px solid rgba(0,0,0,0.1);
+    box-shadow: inset 4px 0 20px rgba(0,0,0,0.1);
+    /* Ensure the front face opaquely covers everything under it when facing viewer */
+    z-index: 2;
+  }
+  .page-front::before {
+    content: "";
+    position: absolute; inset: 0;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='2'/><feColorMatrix values='0 0 0 0 0.3  0 0 0 0 0.2  0 0 0 0 0.1  0 0 0 0.08 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+    mix-blend-mode: multiply;
+    opacity: 0.4;
+    pointer-events: none;
+  }
+  .page-front::after {
+    content: "";
+    position: absolute; inset: 0;
+    background: linear-gradient(115deg, transparent 30%, rgba(255,255,255,0.4) 50%, transparent 70%);
+    pointer-events: none;
+    opacity: 0.3;
+  }
+  .page-back {
+    background: #0a0a0b;
+    color: var(--ink);
+    transform: rotateY(180deg);
+    border-right: 1px solid var(--border);
+  }
+  .page-back::before {
+    content: "";
+    position: absolute; inset: 0;
+    background-image:
+      radial-gradient(ellipse at 20% 30%, rgba(255,45,31,0.08) 0%, transparent 50%),
+      url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/><feColorMatrix values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 0.05 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+    pointer-events: none;
+  }
+
+  .brochure-left-static {
+    position: absolute;
+    top: 0; left: 0;
+    width: 50%;
+    height: 100%;
+    background: linear-gradient(135deg, #ede6d2 0%, #dcd3b8 100%);
+    padding: 50px 44px;
+    color: #1a1a1a;
+    box-shadow: inset -4px 0 20px rgba(0,0,0,0.15);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    /* Keep this panel in 2D, isolated from the right-side 3D space */
+    transform-style: flat;
+    z-index: 2;
+    /* Prevent any bleed-through from pages rotating past the spine */
+    isolation: isolate;
+  }
+  .brochure-left-static::before {
+    content: "";
+    position: absolute; inset: 0;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='2'/><feColorMatrix values='0 0 0 0 0.3  0 0 0 0 0.2  0 0 0 0 0.1  0 0 0 0.08 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+    mix-blend-mode: multiply;
+    opacity: 0.4;
+    pointer-events: none;
+  }
+
+  .broch-tag {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px; letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: #8b5c0f;
+    margin-bottom: 16px;
+    position: relative; z-index: 2;
+  }
+  .broch-title {
+    font-family: 'Anton', sans-serif;
+    font-size: clamp(28px, 3vw, 46px);
+    line-height: 0.95;
+    text-transform: uppercase;
+    color: #1a1a1a;
+    margin-bottom: 24px;
+    position: relative; z-index: 2;
+  }
+  .broch-title em {
+    font-family: 'Instrument Serif', serif;
+    font-style: italic;
+    color: #c49a3a;
+    font-weight: 400;
+  }
+  .broch-big-stat {
+    font-family: 'Anton', sans-serif;
+    font-size: clamp(70px, 9vw, 140px);
+    line-height: 0.85;
+    color: #1a1a1a;
+    margin-bottom: 10px;
+    position: relative; z-index: 2;
+  }
+  .broch-big-stat .u { color: #c49a3a; font-size: 0.5em; }
+  .broch-caption {
+    font-family: 'Special Elite', monospace;
+    font-size: 13px; line-height: 1.7;
+    color: #3a3a3a;
+    max-width: 90%;
+    margin-bottom: 24px;
+    position: relative; z-index: 2;
+  }
+  .broch-badges {
+    display: flex; gap: 10px; flex-wrap: wrap;
+    margin-top: auto;
+    position: relative; z-index: 2;
+  }
+  .broch-badge {
+    font-family: 'Archivo Black', sans-serif;
+    font-size: 9px; letter-spacing: 0.2em;
+    padding: 5px 10px;
+    background: #1a1a1a;
+    color: #ede6d2;
+    text-transform: uppercase;
+  }
+  .broch-badge.gold { background: #c49a3a; color: #1a1a1a; }
+
+  .dirty-stamp {
+    position: absolute;
+    top: 30px; right: -20px;
+    font-family: 'Archivo Black', sans-serif;
+    font-size: 16px; letter-spacing: 0.2em;
+    color: var(--blood);
+    border: 3px double var(--blood);
+    padding: 6px 14px;
+    transform: rotate(12deg);
+    z-index: 3;
+    text-shadow: 0 0 20px rgba(255,45,31,0.4);
+    pointer-events: none;
+  }
+  .dirty-tag {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px; letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--blood);
+    margin-bottom: 16px;
+    position: relative; z-index: 2;
+  }
+  .dirty-tag::before {
+    content: "●";
+    margin-right: 8px;
+    animation: pulse 1.5s ease-in-out infinite;
+  }
+  .dirty-title {
+    font-family: 'Anton', sans-serif;
+    font-size: clamp(26px, 2.8vw, 44px);
+    line-height: 0.95;
+    text-transform: uppercase;
+    color: var(--ink);
+    margin-bottom: 24px;
+    position: relative; z-index: 2;
+  }
+  .dirty-title em {
+    font-family: 'Instrument Serif', serif;
+    font-style: italic;
+    color: var(--blood);
+    font-weight: 400;
+  }
+  .dirty-big-stat {
+    font-family: 'Anton', sans-serif;
+    font-size: clamp(70px, 9vw, 140px);
+    line-height: 0.85;
+    color: var(--blood);
+    margin-bottom: 10px;
+    position: relative; z-index: 2;
+    text-shadow: 0 0 40px rgba(255,45,31,0.3);
+  }
+  .dirty-big-stat .u { color: var(--warning); font-size: 0.5em; }
+  .dirty-caption {
+    font-family: 'Special Elite', monospace;
+    font-size: 13px; line-height: 1.7;
+    color: var(--ink-2);
+    max-width: 95%;
+    margin-bottom: 24px;
+    position: relative; z-index: 2;
+  }
+  .dirty-receipts {
+    margin-top: auto;
+    padding-top: 16px;
+    border-top: 1px dashed var(--border-2);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px; letter-spacing: 0.2em;
+    color: var(--ink-3);
+    text-transform: uppercase;
+    position: relative; z-index: 2;
+    display: flex; gap: 14px; flex-wrap: wrap;
+  }
+  .dirty-receipts span {
+    padding: 3px 8px;
+    background: var(--bg-card);
+    border: 1px solid var(--border-2);
+  }
+
+  .left-static-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px; letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: #8b5c0f;
+    margin-bottom: 20px;
+    position: relative; z-index: 2;
+  }
+  .left-static-title {
+    font-family: 'Anton', sans-serif;
+    font-size: clamp(28px, 3vw, 46px);
+    line-height: 0.95;
+    text-transform: uppercase;
+    color: #1a1a1a;
+    margin-bottom: 20px;
+    position: relative; z-index: 2;
+  }
+  .left-static-title em {
+    font-family: 'Instrument Serif', serif;
+    font-style: italic;
+    color: #c49a3a;
+    font-weight: 400;
+  }
+  .left-static-meta {
+    font-family: 'Special Elite', monospace;
+    font-size: 13px; line-height: 1.8;
+    color: #3a3a3a;
+    position: relative; z-index: 2;
+  }
+  .left-static-meta div {
+    padding: 10px 0;
+    border-bottom: 1px dashed rgba(0,0,0,0.2);
+    display: flex; justify-content: space-between;
+  }
+  .left-static-meta div:last-child { border-bottom: none; }
+  .left-static-meta .k {
+    font-family: 'Archivo Black', sans-serif;
+    font-size: 9px; letter-spacing: 0.2em;
+    color: #8b5c0f;
+    text-transform: uppercase;
+  }
+
+  /* HUD overlay while pinned */
+  .brochure-hud {
+    position: absolute;
+    top: 50%;
+    left: 40px;
+    transform: translateY(-50%);
+    z-index: 20;
+    pointer-events: none;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.25em;
+    color: var(--ink-3);
+    text-transform: uppercase;
+  }
+  .brochure-hud .hud-label {
+    color: var(--blood);
+    margin-bottom: 6px;
+  }
+  .brochure-hud .hud-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    transition: color 0.4s var(--ease);
+  }
+  .brochure-hud .hud-dot {
+    width: 8px; height: 8px;
+    border: 1px solid var(--ink-3);
+    transition: all 0.4s var(--ease);
+  }
+  .brochure-hud .hud-row.done .hud-dot {
+    background: var(--ink-3);
+    border-color: var(--ink-3);
+  }
+  .brochure-hud .hud-row.active {
+    color: var(--warning);
+  }
+  .brochure-hud .hud-row.active .hud-dot {
+    background: var(--blood);
+    border-color: var(--blood);
+    box-shadow: 0 0 12px var(--blood);
+    transform: scale(1.3);
+  }
+
+  .brochure-counter-big {
+    position: absolute;
+    top: 50%;
+    right: 40px;
+    transform: translateY(-50%);
+    z-index: 20;
+    pointer-events: none;
+    font-family: 'Anton', sans-serif;
+    text-align: right;
+    line-height: 0.9;
+  }
+  .brochure-counter-big .current {
+    font-size: clamp(80px, 10vw, 160px);
+    color: var(--blood);
+    display: block;
+    text-shadow: 0 0 40px rgba(255,45,31,0.3);
+  }
+  .brochure-counter-big .total {
+    font-size: 20px;
+    color: var(--ink-3);
+    letter-spacing: 0.2em;
+    display: block;
+    margin-top: 4px;
+  }
+  .brochure-counter-big .label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.3em;
+    color: var(--ink-3);
+    text-transform: uppercase;
+    margin-top: 8px;
+    display: block;
+  }
+
+  .brochure-progress-top {
+    position: absolute;
+    top: 80px;
+    left: 40px;
+    right: 40px;
+    height: 2px;
+    background: var(--border);
+    z-index: 20;
+    pointer-events: none;
+  }
+  .brochure-progress-top-fill {
+    height: 100%;
+    background: var(--blood);
+    width: 0;
+    box-shadow: 0 0 10px var(--blood);
+  }
+  .brochure-progress-top .labels {
+    position: absolute;
+    top: -24px;
+    left: 0; right: 0;
+    display: flex;
+    justify-content: space-between;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.3em;
+    color: var(--ink-3);
+    text-transform: uppercase;
+  }
+  .brochure-progress-top .labels .right { color: var(--warning); }
+
+  /* Outro panel — slides in from the right */
+  .brochure-outro {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px;
+    text-align: center;
+    max-width: 1200px;
+  }
+  .brochure-outro h3 {
+    font-family: 'Anton', sans-serif;
+    font-size: clamp(60px, 9vw, 140px);
+    line-height: 0.9;
+    text-transform: uppercase;
+    max-width: 1100px;
+  }
+  .brochure-outro h3 em {
+    font-family: 'Instrument Serif', serif;
+    font-style: italic;
+    color: var(--blood);
+    font-weight: 400;
+  }
+  .brochure-outro .tag {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--warning);
+    margin-bottom: 24px;
+  }
+  .brochure-outro .outro-meta {
+    margin-top: 36px;
+    display: flex;
+    gap: 32px;
+    flex-wrap: wrap;
+    justify-content: center;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.25em;
+    color: var(--ink-3);
+    text-transform: uppercase;
+  }
+  .brochure-outro .outro-meta span {
+    padding: 8px 14px;
+    border: 1px solid var(--border-2);
+    background: var(--bg-card);
+  }
+  .brochure-outro .outro-cta {
+    margin-top: 40px;
+    padding: 18px 36px;
+    background: var(--blood);
+    color: #000;
+    font-family: 'Archivo Black', sans-serif;
+    font-size: 13px;
+    letter-spacing: 0.3em;
+    border: none;
+    cursor: none;
+    box-shadow: 4px 4px 0 var(--ink), 0 0 30px rgba(255,45,31,0.4);
+    transition: transform 0.3s var(--ease), box-shadow 0.3s var(--ease);
+  }
+  .brochure-outro .outro-cta:hover {
+    transform: translate(-2px, -2px);
+    box-shadow: 6px 6px 0 var(--ink), 0 0 50px rgba(255,45,31,0.6);
+  }
+
+  /* ========== RESPONSIVE ========== */
+  @media (max-width: 900px) {
+    body { cursor: auto; }
+    .cursor, .cursor-ring, .cursor-label { display: none; }
+    nav { padding: 14px 20px; }
+    .nav-links { display: none; }
+    .hero { grid-template-columns: 1fr; padding: 160px 20px 60px; gap: 40px; }
+    .hero { height: 100vh; }
+    .hero-hint { bottom: 70px; font-size: 9px; gap: 8px; }
+    .scroll-hint { display: none; }
+    .intro-section { padding: 80px 20px 80px; }
+    .intro-meta { gap: 10px; font-size: 9px; margin-bottom: 36px; }
+    .intro-sub { font-size: 14px; margin-bottom: 36px; }
+    .intro-cta { flex-direction: column; gap: 10px; }
+    .intro-cta .btn { width: 100%; justify-content: center; }
+    .stats { grid-template-columns: 1fr 1fr; padding: 60px 20px; }
+    .manifesto { padding: 60px 20px; }
+    .m-grid { grid-template-columns: 1fr; }
+    .submit { grid-template-columns: 1fr; padding: 60px 20px; }
+    .docs { height: 420px; }
+    .footer-grid { grid-template-columns: 1fr 1fr; }
+    .footer-bottom { flex-direction: column; gap: 12px; }
+    .drag-header { padding: 0 20px; }
+    .drag-track { padding: 0 20px; }
+    .case { flex: 0 0 82vw; min-height: auto; }
+    .case.featured { flex: 0 0 85vw; }
+    .drag-progress { margin: 40px 20px 0; }
+    .spotlight { height: 70vh; }
+    .redact-section { padding: 80px 20px; min-height: 200vh; }
+    .redact-doc { padding: 30px; }
+    .comparison { padding: 80px 20px; }
+    .comparison-slider { height: 400px; }
+    .comparison-side { padding: 30px; }
+    .comparison-side h3 { max-width: 100%; }
+    .comparison-side .desc { max-width: 100%; }
+    .brochure-pin { height: 100vh; }
+    .brochure-stage { width: 95vw; }
+    .brochure-book { height: 60vh; }
+    .page-face, .brochure-left-static { padding: 22px 18px; }
+    .broch-big-stat, .dirty-big-stat { font-size: 56px; }
+    .broch-title, .dirty-title, .left-static-title { font-size: 22px; }
+    .dirty-stamp { font-size: 10px; padding: 3px 8px; top: 16px; right: -8px; }
+    .brochure-hud, .brochure-counter-big { display: none; }
+    .brochure-progress-top { top: 60px; left: 20px; right: 20px; }
+    .brochure-intro h2 { font-size: 44px; }
+  }
+</style>
+</head>
+<body class="loading">
+
+<div class="cursor"></div>
+<div class="cursor-ring"></div>
+<div class="cursor-label"></div>
+
+<div class="ambient"></div>
+<div class="noise"></div>
+<div class="scanlines"></div>
+
+<!-- LOADER -->
+<div class="loader">
+  <div class="loader-text">
+    <span>DIRTY</span>
+    <span class="red">BROCHURE</span>
+  </div>
+  <div class="loader-bar"><div class="loader-bar-fill"></div></div>
+  <div class="loader-meta">
+    <span>DECLASSIFYING</span>
+    <span class="percent">0%</span>
+    <span>STAND BY</span>
+  </div>
+</div>
+
+<!-- TAPE -->
+<div class="tape">
+  <div class="tape-track">
+    <span>⚠ CONFIDENTIAL INVESTIGATION</span><span class="dot">●</span>
+    <span>COLLEGES DON'T WANT YOU READING THIS</span><span class="dot">●</span>
+    <span>NEW EPISODE EVERY FRIDAY</span><span class="dot">●</span>
+    <span>UNCENSORED · UNPAID · UNAFRAID</span><span class="dot">●</span>
+    <span>TIP-OFFS WELCOME</span><span class="dot">●</span>
+    <span>⚠ CONFIDENTIAL INVESTIGATION</span><span class="dot">●</span>
+    <span>COLLEGES DON'T WANT YOU READING THIS</span><span class="dot">●</span>
+    <span>NEW EPISODE EVERY FRIDAY</span><span class="dot">●</span>
+  </div>
+</div>
+
+<!-- NAV -->
+<nav>
+  <div class="logo">
+    <span class="badge">DB</span>
+    <span>DIRTY<br>BROCHURE</span>
+  </div>
+  <ul class="nav-links">
+    <li><a href="#investigations" data-hover><span class="nav-counter">01</span>Investigations</a></li>
+    <li><a href="#manifesto" data-hover><span class="nav-counter">02</span>Manifesto</a></li>
+    <li><a href="#submit" data-hover><span class="nav-counter">03</span>Tip Us Off</a></li>
+    <li><a href="#archive" data-hover><span class="nav-counter">04</span>Archive</a></li>
+  </ul>
+  <button class="nav-cta" data-hover>Watch Latest ►</button>
+</nav>
+
+<!-- HERO -->
+<section class="hero" id="hero">
+  <canvas class="hero-canvas" id="heroCanvas"></canvas>
+  <div class="hero-hint" id="heroHint">DRAG TO MIX · CLICK TO CYCLE</div>
+  <div class="scroll-hint">SCROLL TO READ</div>
+</section>
+
+<!-- INTRO STATEMENT -->
+<section class="intro-section">
+  <div class="eyebrow"><span class="num">CH 01 //</span> The premise</div>
+
+  <p class="intro-sub" id="heroSub">
+    We don't take money from colleges. We don't run sponsored "rankings."
+    We buy the prospectus, <span class="hl">visit the actual campus</span>,
+    talk to the actual students, pull the actual NIRF data —
+    and publish what we find. Even when it's ugly.
+    <br><br>
+    Now investigating: <span class="redact" data-truth="VNR VJIET">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>,
+    <span class="redact" data-truth="CBIT">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>,
+    and <span class="redact" data-truth="[redacted pending legal]">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>.
+    Drop in Friday.
+  </p>
+
+  <div class="intro-meta">
+    <span class="file-no">FILE №/ DB-2026-014</span>
+    <span>CLEARANCE: PUBLIC</span>
+    <span class="live">STATUS: ONGOING</span>
+  </div>
+
+  <div class="intro-cta">
+    <a href="#investigations" class="btn btn-primary" data-hover data-magnetic>READ THE FILES →</a>
+    <a href="#submit" class="btn btn-secondary" data-hover data-magnetic>SUBMIT A TIP 🗲</a>
+  </div>
+</section>
+
+<!-- SPOTLIGHT REVEAL -->
+<section class="spotlight" id="spotlight">
+  <div class="spotlight-label"><span style="color:var(--ink-3); margin-right:8px;">CH 02 //</span>Move your cursor</div>
+  <div class="spotlight-layer spotlight-fake-layer">
+    <h2 class="spotlight-fake">
+      Every engineering college claims <em>98% placements,</em> world-class faculty, and industry partners waiting for you on day one.
+    </h2>
+  </div>
+  <div class="spotlight-layer spotlight-real-layer" id="spotlightRealLayer">
+    <h2 class="spotlight-real">
+      Behind the brochure: <em>61% actual placement,</em> 40% ghost faculty, and "partnerships" that are just logos in a PDF.
+    </h2>
+  </div>
+  <div class="spotlight-hint">Hold <span class="key">CURSOR</span> to reveal the truth</div>
+</section>
+
+<!-- BROCHURE FLIP -->
+<section class="brochure-section" id="brochure">
+  <div class="brochure-pin" id="brochurePin">
+
+    <!-- Intro copy (fades out as brochure zooms in) -->
+    <div class="brochure-intro" id="brochureIntro">
+      <div class="label"><span style="color:var(--ink-3); margin-right:8px;">CH 03 //</span>Scroll to flip</div>
+      <h2>One brochure.<br>Two <em>very different</em> stories.</h2>
+      <p>Keep scrolling. Each page of the glossy prospectus flips to reveal what we actually found. Don't look away.</p>
+      <div class="scroll-cue">SCROLL DOWN</div>
+    </div>
+
+    <!-- HUD left (page checklist) -->
+    <div class="brochure-hud" id="brochureHud">
+      <div class="hud-label">▸ FLIPPING THROUGH</div>
+      <div class="hud-row" data-idx="0"><span class="hud-dot"></span><span>01 · PLACEMENTS</span></div>
+      <div class="hud-row" data-idx="1"><span class="hud-dot"></span><span>02 · FACULTY</span></div>
+      <div class="hud-row" data-idx="2"><span class="hud-dot"></span><span>03 · INFRA</span></div>
+      <div class="hud-row" data-idx="3"><span class="hud-dot"></span><span>04 · PARTNERS</span></div>
+    </div>
+
+    <!-- Counter right -->
+    <div class="brochure-counter-big">
+      <span class="current" id="brochCurrent">00</span>
+      <span class="total">/ 04</span>
+      <span class="label">PAGES TURNED</span>
+    </div>
+
+    <!-- Top progress -->
+    <div class="brochure-progress-top">
+      <div class="labels">
+        <span>▸ GLOSSY LIES</span>
+        <span class="right">DIRTY TRUTH ►</span>
+      </div>
+      <div class="brochure-progress-top-fill" id="brochFill"></div>
+    </div>
+
+    <!-- Horizontal rail holds brochure + outro as two viewport-width panels -->
+    <div class="brochure-rail" id="brochureRail">
+
+      <!-- Panel 1: The brochure -->
+      <div class="rail-panel">
+        <div class="brochure-stage" id="brochureStage">
+          <div class="brochure-book" id="brochureBook">
+            <div class="brochure-left-static" id="leftStatic">
+              <div class="left-static-label">▸ THE FILE // DB-014</div>
+              <div class="left-static-title" id="leftTitle">VNR VJIET<br><em>Prospectus 2024</em></div>
+              <div class="left-static-meta" id="leftMeta">
+                <div><span class="k">Location</span><span>Bachupally, Hyderabad</span></div>
+                <div><span class="k">Fees / Yr</span><span>₹1.45 Lakh</span></div>
+                <div><span class="k">NIRF Rank</span><span>101–150 Band</span></div>
+                <div><span class="k">Est.</span><span>1995</span></div>
+                <div><span class="k">Status</span><span>Investigated</span></div>
+                <div><span class="k">File Size</span><span>23 MIN READ</span></div>
+              </div>
+            </div>
+
+            <div class="brochure-spine"></div>
+
+            <div class="brochure-right">
+            <div class="brochure-page" data-page="0">
+              <div class="page-face page-front">
+                <div class="broch-tag">▸ Placement Record // 2023–24</div>
+                <div class="broch-title">World-class placements<br><em>for every graduate.</em></div>
+                <div class="broch-big-stat">98<span class="u">%</span></div>
+                <div class="broch-caption">
+                  "Our students are placed at top-tier companies including Google, Microsoft, Amazon, Adobe, and more — with an average package of ₹14.5L per annum and a highest package reaching ₹45L."
+                </div>
+                <div class="broch-badges">
+                  <span class="broch-badge gold">PREMIUM PLACEMENTS</span>
+                  <span class="broch-badge">500+ RECRUITERS</span>
+                  <span class="broch-badge">₹45L HIGHEST</span>
+                </div>
+              </div>
+              <div class="page-face page-back">
+                <div class="dirty-stamp">EXPOSED</div>
+                <div class="dirty-tag">ACTUAL DATA // NIRF + 47 INTERVIEWS</div>
+                <div class="dirty-title">Only <em>61% got a real offer.</em></div>
+                <div class="dirty-big-stat">61<span class="u">%</span></div>
+                <div class="dirty-caption">
+                  Average calculated using 3 outliers at one tech firm. Median package: ₹4.8L. 38 students signed attendance sheets during placement drives without interviewing — and were counted as "placed." The ₹45L highest package was one student, pre-placement offer from family business.
+                </div>
+                <div class="dirty-receipts">
+                  <span>NIRF 2024 ✓</span>
+                  <span>LinkedIn cross-check ✓</span>
+                  <span>On-record students ✓</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="brochure-page" data-page="1">
+              <div class="page-face page-front">
+                <div class="broch-tag">▸ Faculty // World-Class Mentors</div>
+                <div class="broch-title">200+ expert faculty<br><em>to guide your journey.</em></div>
+                <div class="broch-big-stat">200<span class="u">+</span></div>
+                <div class="broch-caption">
+                  "Learn from India's finest — PhDs from IITs, IISc, and leading global universities. Our faculty-to-student ratio ensures personalised mentorship throughout your degree."
+                </div>
+                <div class="broch-badges">
+                  <span class="broch-badge gold">IIT PHDs</span>
+                  <span class="broch-badge">1:15 RATIO</span>
+                  <span class="broch-badge">GLOBAL ALUMNI</span>
+                </div>
+              </div>
+              <div class="page-face page-back">
+                <div class="dirty-stamp">GHOSTS</div>
+                <div class="dirty-tag">FACULTY AUDIT // 6 DEPARTMENTS</div>
+                <div class="dirty-title">40% are <em>listed but never show up.</em></div>
+                <div class="dirty-big-stat">40<span class="u">%</span></div>
+                <div class="dirty-caption">
+                  14 names on the website teach one "guest lecture" per year. Full-time core faculty: 78. Actual student-to-teacher ratio in CSE: 1:52. Three "PhD-from-IIT" claims traced to online diploma programs. Students reported entire subjects being self-study for full semesters.
+                </div>
+                <div class="dirty-receipts">
+                  <span>Website vs timetable ✓</span>
+                  <span>6 dept heads contacted ✓</span>
+                  <span>Certificate verified ✓</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="brochure-page" data-page="2">
+              <div class="page-face page-front">
+                <div class="broch-tag">▸ Infrastructure // State-of-the-Art</div>
+                <div class="broch-title">World-class labs<br><em>on a sprawling campus.</em></div>
+                <div class="broch-big-stat">45<span class="u">AC</span></div>
+                <div class="broch-caption">
+                  "45-acre green campus with cutting-edge labs, modern hostels, Olympic-sized pool, sports complex, 24/7 library, and the country's most advanced AI research centre."
+                </div>
+                <div class="broch-badges">
+                  <span class="broch-badge gold">AI RESEARCH CENTRE</span>
+                  <span class="broch-badge">24/7 LIBRARY</span>
+                  <span class="broch-badge">OLYMPIC POOL</span>
+                </div>
+              </div>
+              <div class="page-face page-back">
+                <div class="dirty-stamp">FICTION</div>
+                <div class="dirty-tag">ON-SITE VISIT // APR 17, 2026</div>
+                <div class="dirty-title">We walked in. <em>Half of it doesn't exist.</em></div>
+                <div class="dirty-big-stat">½<span class="u">GONE</span></div>
+                <div class="dirty-caption">
+                  "AI Research Centre" = one locked room with a server donated in 2019. Library closes at 8 PM. Swimming pool under construction since 2021. Hostel WiFi ₹500/month extra. The "45-acre" figure includes a forest preserve the college doesn't own. Photos in brochure taken at a different institution in 2018.
+                </div>
+                <div class="dirty-receipts">
+                  <span>Campus visit ✓</span>
+                  <span>Photo forensics ✓</span>
+                  <span>Hostel receipts ✓</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="brochure-page" data-page="3">
+              <div class="page-face page-front">
+                <div class="broch-tag">▸ Industry Partners // 500+ Brands</div>
+                <div class="broch-title">Backed by<br><em>500+ industry giants.</em></div>
+                <div class="broch-big-stat">500<span class="u">+</span></div>
+                <div class="broch-caption">
+                  "Active MoUs with Google, Microsoft, TCS, Infosys, Wipro, Accenture, and 500+ leading companies. Guaranteed internship opportunities and live industry projects every semester."
+                </div>
+                <div class="broch-badges">
+                  <span class="broch-badge gold">GOOGLE MoU</span>
+                  <span class="broch-badge">LIVE PROJECTS</span>
+                  <span class="broch-badge">GUARANTEED INTERN</span>
+                </div>
+              </div>
+              <div class="page-face page-back">
+                <div class="dirty-stamp">LOGOS</div>
+                <div class="dirty-tag">MoU VERIFICATION // RTI FILED</div>
+                <div class="dirty-title">The "partners" are just <em>logos in a PDF.</em></div>
+                <div class="dirty-big-stat">7<span class="u">REAL</span></div>
+                <div class="dirty-caption">
+                  Of 500+ logos, only 7 have active, signed MoUs verifiable via RTI. Google MoU expired 2019. "Live industry projects" = one intern project shared across six batches. 62% of students reported no industry contact during their degree. Most logos sourced from a public list of HR vendors who visited once in 2017.
+                </div>
+                <div class="dirty-receipts">
+                  <span>RTI response ✓</span>
+                  <span>MoU copies requested ✓</span>
+                  <span>Student survey n=240 ✓</span>
+                </div>
+              </div>
+            </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Panel 2: Outro — slides in from the right after all pages flipped -->
+      <div class="rail-panel outro">
+        <div class="brochure-outro" id="brochureOutro">
+          <div class="tag">▸ INVESTIGATION COMPLETE</div>
+          <h3>Every brochure lies.<br><em>We read the back.</em></h3>
+          <div class="outro-meta">
+            <span>4 LIES EXPOSED</span>
+            <span>47 INTERVIEWS</span>
+            <span>NIRF VERIFIED</span>
+            <span>RTI FILED</span>
+          </div>
+          <button class="outro-cta" onclick="document.querySelector('#investigations').scrollIntoView({behavior:'smooth'})">READ THE FULL FILES →</button>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+</section>
+
+<!-- MARQUEE -->
+<div class="marquee">
+  <div class="marquee-track">
+    <span class="marquee-item">NO PAID REVIEWS <span class="sep">✦</span></span>
+    <span class="marquee-item stroke">ONLY RECEIPTS <span class="sep">✦</span></span>
+    <span class="marquee-item">NAMES NAMED <span class="sep">✦</span></span>
+    <span class="marquee-item stroke">LIES EXPOSED <span class="sep">✦</span></span>
+    <span class="marquee-item">NO PAID REVIEWS <span class="sep">✦</span></span>
+    <span class="marquee-item stroke">ONLY RECEIPTS <span class="sep">✦</span></span>
+    <span class="marquee-item">NAMES NAMED <span class="sep">✦</span></span>
+    <span class="marquee-item stroke">LIES EXPOSED <span class="sep">✦</span></span>
+  </div>
+</div>
+
+<!-- DRAG HORIZONTAL -->
+<section class="drag-section" id="investigations">
+  <div class="drag-header">
+    <div class="drag-header-left">
+      <div class="label"><span style="color:var(--ink-3); margin-right:8px;">CH 04 //</span>Case files / Published</div>
+      <h2>What the glossy<br>brochure <em>left out.</em></h2>
+    </div>
+    <p>Seven investigations. Forty-seven interviews. Five years of NIRF data. Drag sideways or scroll to flip through the files. →</p>
+  </div>
+
+  <div class="drag-track-wrap">
+    <div class="drag-track" id="dragTrack">
+      <article class="case featured" data-hover>
+        <div class="case-no">CASE FILE № DB-014 // TELANGANA</div>
+        <span class="watermark">TOP READ</span>
+        <h3>VNR VJIET: The "Tier 1.5" nobody explains</h3>
+        <p>Placement numbers averaged a little too conveniently. We pulled five years of NIRF data, cross-checked with 47 recent graduates on LinkedIn, and walked the campus unannounced on a Wednesday afternoon.</p>
+        <div class="tags">
+          <span class="tag flag">NIRF VERIFIED</span>
+          <span class="tag">47 INTERVIEWS</span>
+          <span class="tag">ON-SITE</span>
+        </div>
+        <div class="bottom"><span>23 min · 2.1M views</span><span class="open">OPEN FILE ►</span></div>
+      </article>
+
+      <article class="case" data-hover>
+        <div class="case-no">CASE FILE № DB-013</div>
+        <h3>CBIT: Actually worth the tag?</h3>
+        <p>Autonomous. Government-affiliated. Cutoffs that make parents cry. But is the classroom experience matching the rank it demands? We audited six departments.</p>
+        <div class="tags">
+          <span class="tag">6 DEPTS AUDITED</span>
+          <span class="tag">CUTOFFS</span>
+        </div>
+        <div class="bottom"><span>19 min · 880K</span><span class="open">OPEN ►</span></div>
+      </article>
+
+      <article class="case" data-hover>
+        <div class="case-no">№ DB-012</div>
+        <h3>The "deemed" trap</h3>
+        <p>A growing class of private universities selling dreams at ₹22L+. What "deemed-to-be" actually means — and doesn't.</p>
+        <div class="tags"><span class="tag flag">RED FLAG</span></div>
+        <div class="bottom"><span>27 min · 1.4M</span><span class="open">OPEN ►</span></div>
+      </article>
+
+      <article class="case" data-hover>
+        <div class="case-no">№ DB-011</div>
+        <h3>CVR: The mixed bag</h3>
+        <p>Placements are real. The hostel food isn't. We break down what's worth the fee and what's absolutely not.</p>
+        <div class="tags"><span class="tag">STUDENT VOICES</span></div>
+        <div class="bottom"><span>15 min · 620K</span><span class="open">OPEN ►</span></div>
+      </article>
+
+      <article class="case" data-hover>
+        <div class="case-no">№ DB-010</div>
+        <h3>Fake placement posters</h3>
+        <p>Six colleges. Same stock photo of "our student at Google." We tracked down who that actually is.</p>
+        <div class="tags"><span class="tag flag">INVESTIGATION</span></div>
+        <div class="bottom"><span>21 min · 3.2M</span><span class="open">OPEN ►</span></div>
+      </article>
+
+      <article class="case" data-hover>
+        <div class="case-no">CASE FILE № DB-009</div>
+        <h3>EAMCET: The college you should've picked</h3>
+        <p>We ranked 34 Hyderabad colleges by what actually matters — not by who paid a counselling platform to feature them first.</p>
+        <div class="tags">
+          <span class="tag">34 COLLEGES</span>
+          <span class="tag">EAMCET</span>
+        </div>
+        <div class="bottom"><span>38 min · 4.3M</span><span class="open">OPEN ►</span></div>
+      </article>
+
+      <article class="case" data-hover>
+        <div class="case-no">№ DB-008</div>
+        <h3>"NAAC A++" means nothing</h3>
+        <p>How the accreditation became a marketing sticker — and the three things parents should actually ask instead.</p>
+        <div class="tags"><span class="tag flag">EXPOSÉ</span></div>
+        <div class="bottom"><span>17 min · 1.2M</span><span class="open">OPEN ►</span></div>
+      </article>
+    </div>
+  </div>
+
+  <div class="drag-progress">
+    <div class="drag-progress-fill"></div>
+    <div class="drag-progress-meta">
+      <span>FILE <span id="caseIndex">01</span> / 07</span>
+      <span class="right">DRAG / SCROLL / ARROWS ↔</span>
+    </div>
+  </div>
+</section>
+
+<!-- REDACTION REVEAL -->
+<section class="redact-section">
+  <div class="redact-inner">
+    <div class="redact-label"><span style="color:var(--ink-3); margin-right:8px;">CH 05 //</span>Scroll to declassify</div>
+    <div class="redact-doc">
+      The placement report for the academic year
+      <span class="redact-block">2023–24</span>
+      shows an average package of
+      <span class="redact-block">₹6.2L</span>
+      — not the
+      <span class="redact-block">₹14.5L</span>
+      advertised in the prospectus. Only
+      <span class="redact-block">61%</span>
+      of eligible students received an offer. Three companies —
+      <span class="redact-block">named in the full report</span>
+      — contributed to more than half of all "placements."
+      The "world-class faculty" section counts
+      <span class="redact-block">14 guest lecturers</span>
+      who teach one session a year.
+      <div class="redact-counter"><span class="n" id="declassN">0</span>/8 DECLASSIFIED</div>
+    </div>
+    <p class="redact-hint">Keep scrolling — each line declassifies as it enters view.</p>
+  </div>
+</section>
+
+<!-- COMPARISON SLIDER -->
+<section class="comparison">
+  <div class="comparison-header">
+    <div class="label"><span style="color:var(--ink-3); margin-right:8px;">CH 06 //</span>Drag to compare</div>
+    <h2>Brochure <em>vs.</em> Reality.</h2>
+  </div>
+
+  <div class="comparison-slider" id="compSlider">
+    <div class="comparison-side brochure">
+      <div class="tag-label">WHAT THE PROSPECTUS SAYS</div>
+      <h3>98% placement record</h3>
+      <div class="stat">98<span class="unit">%</span></div>
+      <p class="desc">"Our students are placed at top-tier companies including Google, Microsoft, Amazon, with an average package of ₹14.5L per annum and highest package reaching ₹45L."</p>
+    </div>
+    <div class="comparison-side reality">
+      <div class="tag-label">WHAT WE ACTUALLY FOUND</div>
+      <h3>61% got a real offer</h3>
+      <div class="stat">61<span class="unit">%</span></div>
+      <p class="desc">"Average calculated using three outliers. Median package: ₹4.8L. 'Top-tier' companies = 3 students at one tech firm. Most students signed fake attendance sheets during placement drives."</p>
+    </div>
+    <div class="comparison-handle"></div>
+  </div>
+
+  <div class="comparison-caption">
+    <span class="brochure-cap">◄ WHAT THEY PRINT</span>
+    <span class="reality-cap">WHAT WE FOUND ►</span>
+  </div>
+</section>
+
+<!-- STATS -->
+<section class="stats">
+  <div class="stat-item">
+    <div class="num" data-count="47"><span class="count">0</span><span class="unit">+</span></div>
+    <div class="label">Colleges<br>Investigated</div>
+  </div>
+  <div class="stat-item">
+    <div class="num" data-count="1240"><span class="count">0</span></div>
+    <div class="label">Students<br>Interviewed</div>
+  </div>
+  <div class="stat-item">
+    <div class="num" data-count="0"><span class="count">0</span><span class="unit">₹</span></div>
+    <div class="label">Taken from<br>Colleges (Ever)</div>
+  </div>
+  <div class="stat-item">
+    <div class="num" data-count="28"><span class="count">0</span><span class="unit">M</span></div>
+    <div class="label">Views<br>Across Episodes</div>
+  </div>
+</section>
+
+<!-- MANIFESTO -->
+<section class="manifesto" id="manifesto">
+  <div class="manifesto-inner">
+    <div style="font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 0.3em; text-transform: uppercase; color: var(--blood); display: flex; align-items: center; gap: 14px; margin-bottom: 36px;">
+      <span style="width: 44px; height: 2px; background: var(--blood); box-shadow: 0 0 12px var(--blood);"></span>
+      <span style="color: var(--ink-3); font-size: 10px; margin-right: 4px;">CH 07 //</span>
+      <span>The manifesto</span>
+    </div>
+    <h2 class="manifesto-title">
+      We're not <span class="strike">influencers.</span><br>
+      <em>We're witnesses.</em>
+    </h2>
+    <div class="m-grid">
+      <div class="m-item" data-reveal data-hover>
+        <div class="num">// 01</div>
+        <h4>No college pays us</h4>
+        <p>Zero sponsored "reviews." Zero paid rankings. Zero "featured partners." If we ever take a rupee from any college, this site shuts down that day. That's the deal.</p>
+      </div>
+      <div class="m-item" data-reveal data-hover>
+        <div class="num">// 02</div>
+        <h4>We show the receipts</h4>
+        <p>Every claim backed by NIRF filings, independently verified placement data, or on-record student interviews. Sources listed at the bottom of every file. You can check us.</p>
+      </div>
+      <div class="m-item" data-reveal data-hover>
+        <div class="num">// 03</div>
+        <h4>We protect students</h4>
+        <p>Tips come in anonymous. We never name our sources. Every interview is consented. We're building a database so the next EAMCET batch doesn't walk in blind.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SUBMIT -->
+<section class="submit" id="submit">
+  <div class="docs">
+    <div class="doc doc1" data-parallax="0.05">
+      <div class="doc-h">PROSPECTUS CLAIM</div>
+      "98% Placement Record across all branches for the academic year 2023-24, with average package of <span class="redact-inline" style="width:80px;"></span> LPA..."
+    </div>
+    <div class="doc doc2" data-parallax="0.12">
+      <div class="doc-h">WHAT WE FOUND</div>
+      Only 61% of students received an offer. "Average" calculated using <span class="redact-inline" style="width:140px;"></span> outliers from 3 students placed at <span class="redact-inline" style="width:60px;"></span>.
+    </div>
+    <div class="doc doc3" data-parallax="0.08">
+      <div class="doc-h">STUDENT SAYS</div>
+      "They made us sit in a hall and sign an attendance sheet during the placement drive — I never even interviewed and they listed me as placed."
+    </div>
+  </div>
+
+  <div class="submit-text">
+    <div style="font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 0.3em; text-transform: uppercase; color: var(--blood); display: flex; align-items: center; gap: 14px; margin-bottom: 28px;" data-reveal>
+      <span style="width: 44px; height: 2px; background: var(--blood); box-shadow: 0 0 12px var(--blood);"></span>
+      <span style="color: var(--ink-3); font-size: 10px; margin-right: 4px;">CH 08 //</span>
+      <span>Tip us off</span>
+    </div>
+    <h2 data-reveal>Got a <em>dirty secret</em> about a college?</h2>
+    <p data-reveal>Fake placement data, ghost faculty, harassment covered up, fee fraud — whatever it is, we'll verify it independently and follow it to the end. Your identity stays with us. Always.</p>
+
+    <form class="form" data-reveal-stagger onsubmit="event.preventDefault(); alert('TIP RECEIVED // FILE OPENED // You will not hear from us unless we need to verify. Stay safe.');">
+      <input type="text" placeholder="COLLEGE NAME (or approximate)">
+      <select>
+        <option>WHAT'S THE STORY?</option>
+        <option>Fake placement data</option>
+        <option>Fee / admission fraud</option>
+        <option>Harassment / cover-up</option>
+        <option>Ghost faculty / infra lies</option>
+        <option>Other — I'll explain</option>
+      </select>
+      <textarea placeholder="TELL US WHAT YOU KNOW. BE AS SPECIFIC AS YOU'RE COMFORTABLE WITH."></textarea>
+      <input type="text" placeholder="OPTIONAL: SIGNAL / PROTON / BURNER TO REACH YOU">
+      <button type="submit" data-hover data-magnetic>SUBMIT ENCRYPTED TIP →</button>
+      <p class="form-note">⚠ We do not store IPs. Submissions reviewed by humans, never passed to colleges, never monetized.</p>
+    </form>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer id="archive">
+  <div class="footer-huge">DIRTY<br><span class="red">BROCHURE.</span></div>
+  <div class="footer-grid">
+    <div>
+      <p class="footer-tag">
+        An independent investigative series into Indian engineering colleges. Based out of Hyderabad. Funded by viewers, no one else.
+      </p>
+    </div>
+    <div class="footer-col">
+      <h5>FILES</h5>
+      <a href="#" data-hover>All Investigations</a>
+      <a href="#" data-hover>By State</a>
+      <a href="#" data-hover>By Exam</a>
+      <a href="#" data-hover>Most Watched</a>
+    </div>
+    <div class="footer-col">
+      <h5>THE SERIES</h5>
+      <a href="#" data-hover>Manifesto</a>
+      <a href="#" data-hover>Methodology</a>
+      <a href="#" data-hover>The Team</a>
+      <a href="#" data-hover>Press / Corrections</a>
+    </div>
+    <div class="footer-col">
+      <h5>WATCH</h5>
+      <a href="#" data-hover>YouTube</a>
+      <a href="#" data-hover>Instagram</a>
+      <a href="#" data-hover>Newsletter</a>
+      <a href="#" data-hover>RSS Feed</a>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <div class="legal">
+      © 2026 DIRTY BROCHURE. All investigations based on publicly available data, on-record interviews, and independent verification. Colleges with objections can email corrections@dirtybrochure.in — we respond to every legitimate dispute.
+    </div>
+    <div>BUILT IN HYDERABAD ✦ MADE FOR STUDENTS</div>
+  </div>
+</footer>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/Draggable.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/InertiaPlugin.min.js"></script>
+
+<script>
+  gsap.registerPlugin(ScrollTrigger, Draggable);
+
+  /* ========== CUSTOM CURSOR ========== */
+  const cursor = document.querySelector('.cursor');
+  const ring = document.querySelector('.cursor-ring');
+  const label = document.querySelector('.cursor-label');
+  let mouseX = window.innerWidth / 2;
+  let mouseY = window.innerHeight / 2;
+  let ringX = mouseX, ringY = mouseY;
+
+  window.addEventListener('mousemove', e => {
+    mouseX = e.clientX;
+    mouseY = e.clientY;
+    gsap.to(cursor, { x: mouseX, y: mouseY, duration: 0.08, ease: 'none' });
+    gsap.to(label, { x: mouseX, y: mouseY, duration: 0.15, ease: 'none' });
+  });
+
+  gsap.ticker.add(() => {
+    ringX += (mouseX - ringX) * 0.15;
+    ringY += (mouseY - ringY) * 0.15;
+    gsap.set(ring, { x: ringX, y: ringY });
+  });
+
+  function setCursorState(state, text) {
+    cursor.classList.remove('active');
+    ring.classList.remove('active', 'drag', 'reveal');
+    label.classList.remove('active');
+    if (state) {
+      cursor.classList.add('active');
+      ring.classList.add(state);
+      if (text) { label.textContent = text; label.classList.add('active'); }
+    }
+  }
+
+  document.querySelectorAll('[data-hover]').forEach(el => {
+    el.addEventListener('mouseenter', () => {
+      let text = null;
+      if (el.matches('.case')) text = 'OPEN FILE';
+      else if (el.matches('.m-item')) text = null;
+      else if (el.matches('button, .btn, .nav-cta')) text = 'CLICK';
+      setCursorState('active', text);
+    });
+    el.addEventListener('mouseleave', () => setCursorState(null));
+  });
+
+  /* ========== MAGNETIC BUTTONS ========== */
+  document.querySelectorAll('[data-magnetic]').forEach(btn => {
+    btn.addEventListener('mousemove', e => {
+      const rect = btn.getBoundingClientRect();
+      const x = e.clientX - rect.left - rect.width / 2;
+      const y = e.clientY - rect.top - rect.height / 2;
+      gsap.to(btn, { x: x * 0.3, y: y * 0.3, duration: 0.5, ease: 'power3.out' });
+    });
+    btn.addEventListener('mouseleave', () => {
+      gsap.to(btn, { x: 0, y: 0, duration: 0.6, ease: 'elastic.out(1, 0.4)' });
+    });
+  });
+
+  /* ========== LOADER ========== */
+  const loader = document.querySelector('.loader');
+  const loaderFill = document.querySelector('.loader-bar-fill');
+  const percent = document.querySelector('.percent');
+
+  gsap.set('.hero-hint', { opacity: 0 });
+
+  const loadTl = gsap.timeline();
+  loadTl
+    .to('.loader-text span', {
+      y: 0,
+      duration: 1,
+      stagger: 0.1,
+      ease: 'power4.out'
+    })
+    .to(loaderFill, {
+      scaleX: 1,
+      duration: 1.6,
+      ease: 'power2.inOut',
+      onUpdate: function() {
+        percent.textContent = Math.round(this.progress() * 100) + '%';
+      }
+    }, '-=0.5')
+    .to('.loader-text span, .loader-meta, .loader-bar', {
+      yPercent: -120,
+      duration: 0.8,
+      stagger: 0.05,
+      ease: 'power4.in'
+    }, '+=0.2')
+    .to(loader, {
+      yPercent: -100,
+      duration: 1,
+      ease: 'power4.inOut'
+    }, '-=0.3')
+    .set(loader, { display: 'none' })
+    .call(() => {
+      document.body.classList.remove('loading');
+      playHero();
+    });
+
+  /* ========== HERO ENTRANCE ========== */
+  function playHero() {
+    gsap.to('.hero-hint', { opacity: 1, duration: 1, delay: 0.6, ease: 'power2.out' });
+    initHeroInteractive();
+  }
+
+  /* ========== HERO INTERACTIVE SYSTEMS ========== */
+  function initHeroInteractive() {
+
+    // ---- Redact blocks (in intro section) — typewriter reveal on hover ----
+    document.querySelectorAll('.intro-sub .redact').forEach(block => {
+      const truth = block.dataset.truth;
+      if (!truth) return;
+      const originalHTML = block.innerHTML;
+      let timer = null;
+      let cancelled = false;
+
+      block.addEventListener('mouseenter', () => {
+        cancelled = false;
+        block.classList.add('revealed');
+        block.innerHTML = '';
+        let i = 0;
+        clearInterval(timer);
+        timer = setInterval(() => {
+          if (cancelled) { clearInterval(timer); return; }
+          if (i <= truth.length) {
+            block.textContent = truth.slice(0, i);
+            i++;
+          } else {
+            clearInterval(timer);
+          }
+        }, 35);
+      });
+
+      block.addEventListener('mouseleave', () => {
+        cancelled = true;
+        clearInterval(timer);
+        block.classList.remove('revealed');
+        block.innerHTML = originalHTML;
+      });
+    });
+
+    // ---- TEXT-PARTICLE HERO CANVAS ----
+    initHeroParticles();
+  }
+
+  function initHeroParticles() {
+    const section = document.getElementById('hero');
+    const canvas = document.getElementById('heroCanvas');
+    if (!section || !canvas) return;
+
+    const ctx = canvas.getContext('2d');
+    const wordIdxEl = document.getElementById('heroWordIdx'); // may be null - safe guarded below
+
+    const sample = document.createElement('canvas');
+    const sampleCtx = sample.getContext('2d', { willReadFrequently: true });
+
+    let W = 0, H = 0;
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+
+    // Words to morph between — your brand-front sequence
+    const words = [
+      { text: 'DIRTY',    sub: 'BROCHURE',     color: '#ff2d1f' },
+      { text: 'READ',     sub: 'THE BACK',     color: '#f2f2f2' },
+      { text: 'NO PAID',  sub: 'REVIEWS',      color: '#ffd60a' },
+      { text: 'EXPOSED',  sub: '× 47',         color: '#c4ff3d' }
+    ];
+    let wordIndex = 0;
+    let particles = [];
+
+    function sizeCanvas() {
+      const r = section.getBoundingClientRect();
+      W = r.width;
+      H = r.height;
+      canvas.width = W * dpr;
+      canvas.height = H * dpr;
+      canvas.style.width = W + 'px';
+      canvas.style.height = H + 'px';
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      sample.width = W;
+      sample.height = H;
+    }
+
+    function sampleText(line1, line2) {
+      sampleCtx.clearRect(0, 0, W, H);
+      sampleCtx.fillStyle = '#fff';
+      sampleCtx.textAlign = 'center';
+      sampleCtx.textBaseline = 'middle';
+
+      const fontSize1 = Math.min(W * 0.16, H * 0.30);
+      const fontSize2 = fontSize1 * 0.55;
+
+      sampleCtx.font = `900 ${fontSize1}px "Anton", "Archivo Black", sans-serif`;
+      sampleCtx.fillText(line1, W / 2, H / 2 - fontSize1 * 0.30);
+
+      sampleCtx.font = `italic 400 ${fontSize2}px "Instrument Serif", serif`;
+      sampleCtx.fillText(line2, W / 2, H / 2 + fontSize1 * 0.40);
+
+      const data = sampleCtx.getImageData(0, 0, W, H).data;
+
+      const step = Math.max(2, Math.floor(W / 480));
+      const positions = [];
+      for (let y = 0; y < H; y += step) {
+        for (let x = 0; x < W; x += step) {
+          const idx = (y * W + x) * 4 + 3;
+          if (data[idx] > 128) {
+            positions.push({ x: x + (Math.random() - 0.5) * step, y: y + (Math.random() - 0.5) * step });
+          }
+        }
+      }
+      return positions;
+    }
+
+    function buildParticles() {
+      const w = words[wordIndex];
+      const positions = sampleText(w.text, w.sub);
+
+      if (particles.length === 0) {
+        positions.forEach(pos => {
+          particles.push({
+            x: W / 2 + (Math.random() - 0.5) * W,
+            y: H / 2 + (Math.random() - 0.5) * H,
+            homeX: pos.x,
+            homeY: pos.y,
+            vx: 0,
+            vy: 0,
+            size: 0.6 + Math.random() * 1.4,
+            color: w.color,
+            alpha: 0.5 + Math.random() * 0.5,
+            drift: Math.random() * Math.PI * 2,
+            driftSpeed: 0.001 + Math.random() * 0.002
+          });
+        });
+      } else {
+        for (let i = 0; i < particles.length; i++) {
+          if (i < positions.length) {
+            particles[i].homeX = positions[i].x;
+            particles[i].homeY = positions[i].y;
+            particles[i].color = w.color;
+          } else {
+            particles[i].homeX = W / 2 + (Math.random() - 0.5) * W * 1.4;
+            particles[i].homeY = H / 2 + (Math.random() - 0.5) * H * 1.4;
+            particles[i].color = w.color;
+          }
+        }
+        for (let i = particles.length; i < positions.length; i++) {
+          particles.push({
+            x: W / 2 + (Math.random() - 0.5) * W,
+            y: H / 2 + (Math.random() - 0.5) * H,
+            homeX: positions[i].x,
+            homeY: positions[i].y,
+            vx: 0,
+            vy: 0,
+            size: 0.6 + Math.random() * 1.4,
+            color: w.color,
+            alpha: 0.5 + Math.random() * 0.5,
+            drift: Math.random() * Math.PI * 2,
+            driftSpeed: 0.001 + Math.random() * 0.002
+          });
+        }
+        if (particles.length > positions.length * 1.5) {
+          particles.length = positions.length;
+        }
+      }
+    }
+
+    sizeCanvas();
+    buildParticles();
+    if (wordIdxEl) wordIdxEl.textContent = String(wordIndex + 1).padStart(2, '0');
+
+    // Mouse / drag state
+    let mx = -9999, my = -9999;
+    let prevMx = mx, prevMy = my;
+    let mouseVx = 0, mouseVy = 0;
+    let isDragging = false;
+
+    section.addEventListener('mousemove', e => {
+      const r = section.getBoundingClientRect();
+      mx = e.clientX - r.left;
+      my = e.clientY - r.top;
+    });
+    section.addEventListener('mouseleave', () => {
+      mx = -9999; my = -9999;
+      isDragging = false;
+    });
+
+    // Click (without drag) on canvas only — not on overlay UI
+    let downX = 0, downY = 0;
+    canvas.addEventListener('mousedown', e => {
+      downX = e.clientX; downY = e.clientY;
+      isDragging = true;
+    });
+    window.addEventListener('mouseup', e => {
+      if (isDragging) {
+        const dx = Math.abs(e.clientX - downX);
+        const dy = Math.abs(e.clientY - downY);
+        if (dx < 5 && dy < 5) {
+          wordIndex = (wordIndex + 1) % words.length;
+          if (wordIdxEl) wordIdxEl.textContent = String(wordIndex + 1).padStart(2, '0');
+          buildParticles();
+        }
+      }
+      isDragging = false;
+    });
+
+    // Touch
+    section.addEventListener('touchstart', e => {
+      const r = section.getBoundingClientRect();
+      mx = e.touches[0].clientX - r.left;
+      my = e.touches[0].clientY - r.top;
+      isDragging = true;
+      downX = e.touches[0].clientX;
+      downY = e.touches[0].clientY;
+    }, { passive: true });
+    section.addEventListener('touchmove', e => {
+      const r = section.getBoundingClientRect();
+      mx = e.touches[0].clientX - r.left;
+      my = e.touches[0].clientY - r.top;
+    }, { passive: true });
+    section.addEventListener('touchend', e => {
+      isDragging = false;
+      mx = -9999; my = -9999;
+    });
+
+    function tick() {
+      mouseVx = mx - prevMx;
+      mouseVy = my - prevMy;
+      prevMx = mx;
+      prevMy = my;
+
+      // Trail clear — leaves faint shimmer behind
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.22)';
+      ctx.fillRect(0, 0, W, H);
+
+      const radius = isDragging ? 200 : 130;
+      const radiusSq = radius * radius;
+
+      for (let i = 0; i < particles.length; i++) {
+        const p = particles[i];
+
+        if (mx > -1000) {
+          const dx = p.x - mx;
+          const dy = p.y - my;
+          const distSq = dx * dx + dy * dy;
+          if (distSq < radiusSq && distSq > 0) {
+            const dist = Math.sqrt(distSq);
+            const influence = (1 - dist / radius);
+            const pushForce = isDragging ? 1.6 : 0.6;
+            p.vx += (dx / dist) * influence * pushForce;
+            p.vy += (dy / dist) * influence * pushForce;
+            if (isDragging) {
+              p.vx += mouseVx * influence * 0.22;
+              p.vy += mouseVy * influence * 0.22;
+            }
+          }
+        }
+
+        const homeDx = p.homeX - p.x;
+        const homeDy = p.homeY - p.y;
+        p.vx += homeDx * 0.018;
+        p.vy += homeDy * 0.018;
+
+        p.drift += p.driftSpeed;
+        p.vx += Math.cos(p.drift) * 0.02;
+        p.vy += Math.sin(p.drift * 1.3) * 0.02;
+
+        p.vx *= 0.92;
+        p.vy *= 0.92;
+
+        p.x += p.vx;
+        p.y += p.vy;
+
+        ctx.fillStyle = p.color;
+        ctx.globalAlpha = p.alpha;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.globalAlpha = 1;
+
+      requestAnimationFrame(tick);
+    }
+    tick();
+
+    let resizeTimer = null;
+    window.addEventListener('resize', () => {
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(() => {
+        sizeCanvas();
+        const w = words[wordIndex];
+        const positions = sampleText(w.text, w.sub);
+        for (let i = 0; i < particles.length; i++) {
+          if (i < positions.length) {
+            particles[i].homeX = positions[i].x;
+            particles[i].homeY = positions[i].y;
+          }
+        }
+      }, 200);
+    });
+  }
+
+  /* ========== SPOTLIGHT REVEAL ========== */
+  const spotlight = document.querySelector('.spotlight');
+  const spotlightRealLayer = document.getElementById('spotlightRealLayer');
+  let spotlightRadius = 0;
+  let spotMouseX = 0, spotMouseY = 0;
+
+  function updateSpotlight() {
+    const clip = `circle(${spotlightRadius}px at ${spotMouseX}px ${spotMouseY}px)`;
+    spotlightRealLayer.style.clipPath = clip;
+    spotlightRealLayer.style.webkitClipPath = clip;
+  }
+
+  spotlight.addEventListener('mouseenter', () => {
+    gsap.to({ r: spotlightRadius }, {
+      r: 220,
+      duration: 0.6,
+      ease: 'power3.out',
+      onUpdate: function() {
+        spotlightRadius = this.targets()[0].r;
+        updateSpotlight();
+      }
+    });
+    setCursorState('reveal');
+  });
+  spotlight.addEventListener('mouseleave', () => {
+    gsap.to({ r: spotlightRadius }, {
+      r: 0,
+      duration: 0.5,
+      ease: 'power3.in',
+      onUpdate: function() {
+        spotlightRadius = this.targets()[0].r;
+        updateSpotlight();
+      }
+    });
+    setCursorState(null);
+  });
+  spotlight.addEventListener('mousemove', e => {
+    const rect = spotlight.getBoundingClientRect();
+    spotMouseX = e.clientX - rect.left;
+    spotMouseY = e.clientY - rect.top;
+    updateSpotlight();
+  });
+
+
+  /* ========== BROCHURE FLIP (SCROLL-DRIVEN, PINNED) ========== */
+  const brochureSection = document.querySelector('.brochure-section');
+  const brochurePin = document.getElementById('brochurePin');
+  const brochureStage = document.getElementById('brochureStage');
+  const brochureIntro = document.getElementById('brochureIntro');
+  const brochureRail = document.getElementById('brochureRail');
+  const brochurePages = Array.from(document.querySelectorAll('.brochure-page'));
+  const brochFill = document.getElementById('brochFill');
+  const brochCurrent = document.getElementById('brochCurrent');
+  const hudRows = document.querySelectorAll('.brochure-hud .hud-row');
+  const leftTitle = document.getElementById('leftTitle');
+  const leftMeta = document.getElementById('leftMeta');
+
+  // Z-index stacking: page 0 on top
+  brochurePages.forEach((page, i) => {
+    page.style.zIndex = brochurePages.length - i;
+  });
+
+  const totalPages = brochurePages.length;
+
+  const leftPageData = [
+    {
+      title: 'VNR VJIET<br><em>Prospectus 2024</em>',
+      meta: [
+        ['Location', 'Bachupally, Hyderabad'],
+        ['Fees / Yr', '₹1.45 Lakh'],
+        ['NIRF Rank', '101–150 Band'],
+        ['Est.', '1995'],
+        ['Status', 'Investigated'],
+        ['File Size', '23 MIN READ']
+      ]
+    },
+    {
+      title: 'Faculty Audit<br><em>Deep Dive</em>',
+      meta: [
+        ['Departments', '6 Audited'],
+        ['Full-time', '78 Confirmed'],
+        ['Guest', '14 Listed'],
+        ['PhD Verified', '31 of 52'],
+        ['Dept Heads', '6 Contacted'],
+        ['Method', 'RTI + Interview']
+      ]
+    },
+    {
+      title: 'Campus Reality<br><em>On-Site Visit</em>',
+      meta: [
+        ['Visit Date', 'Apr 17, 2026'],
+        ['Duration', '6 Hours'],
+        ['Walked', 'Unannounced'],
+        ['Claimed Area', '45 Acres'],
+        ['Actual Owned', '23 Acres'],
+        ['Photos Taken', '247 Archived']
+      ]
+    },
+    {
+      title: 'Industry MoUs<br><em>Verification</em>',
+      meta: [
+        ['Logos Claimed', '500+'],
+        ['MoUs Active', '7 Verified'],
+        ['RTI Filed', 'Feb 2026'],
+        ['Response Days', '34'],
+        ['Students Surveyed', '240'],
+        ['Method', 'Legal + Survey']
+      ]
+    }
+  ];
+
+  let currentLeftIdx = -1;
+  function updateLeftPage(idx) {
+    if (idx === currentLeftIdx) return;
+    currentLeftIdx = idx;
+    const data = leftPageData[Math.min(idx, leftPageData.length - 1)];
+    gsap.to([leftTitle, leftMeta], {
+      opacity: 0,
+      y: -10,
+      duration: 0.2,
+      ease: 'power2.in',
+      onComplete: () => {
+        leftTitle.innerHTML = data.title;
+        leftMeta.innerHTML = data.meta.map(([k, v]) =>
+          `<div><span class="k">${k}</span><span>${v}</span></div>`
+        ).join('');
+        gsap.fromTo([leftTitle, leftMeta],
+          { opacity: 0, y: 10 },
+          { opacity: 1, y: 0, duration: 0.35, ease: 'power2.out', stagger: 0.04 }
+        );
+      }
+    });
+  }
+
+  // Initial state: brochure is small/hidden, intro is visible
+  gsap.set(brochureStage, { scale: 0.4, opacity: 0, rotateX: 20 });
+  gsap.set(brochureRail, { x: 0 });
+
+  // Build the master scroll timeline
+  // Phases:
+  //  0.00 - 0.12 : Intro fades out, brochure zooms in and rotates to flat
+  //  0.12 - 0.82 : Pages flip (each page gets ~0.175 of this range)
+  //  0.82 - 1.00 : Rail slides LEFT, revealing the outro panel from the right
+  const brochureTl = gsap.timeline({
+    scrollTrigger: {
+      trigger: brochureSection,
+      start: 'top top',
+      end: '+=550%',
+      pin: brochurePin,
+      scrub: 1,
+      anticipatePin: 1,
+      invalidateOnRefresh: true,
+      onUpdate: (self) => {
+        const p = self.progress;
+
+        // Update flipped count based on scroll position
+        let flipped = 0;
+        const flipStart = 0.22;
+        const flipEnd = 0.82;
+        const flipRange = flipEnd - flipStart;
+        const perPage = flipRange / totalPages;
+
+        for (let i = 0; i < totalPages; i++) {
+          const pageStart = flipStart + i * perPage;
+          if (p >= pageStart + perPage * 0.6) flipped++;
+        }
+
+        brochCurrent.textContent = String(flipped).padStart(2, '0');
+        brochFill.style.width = (flipped / totalPages * 100) + '%';
+
+        // HUD active state
+        hudRows.forEach((row, i) => {
+          row.classList.remove('active', 'done');
+          if (i < flipped) row.classList.add('done');
+          else if (i === flipped && p > flipStart && p < flipEnd) row.classList.add('active');
+        });
+
+        // Left page updates to show the context for the currently-flipping page
+        const activeIdx = Math.min(totalPages - 1, Math.max(0, flipped));
+        updateLeftPage(activeIdx);
+      }
+    }
+  });
+
+  // Phase 1 (0 → 0.08): Intro exits cleanly, brochure stays hidden
+  brochureTl.to(brochureIntro, {
+    opacity: 0,
+    scale: 0.92,
+    y: -50,
+    duration: 0.08,
+    ease: 'power3.in'
+  }, 0);
+
+  // Hard hide intro after fade so it can never bleed through
+  brochureTl.set(brochureIntro, { visibility: 'hidden', pointerEvents: 'none' }, 0.085);
+  // Restore visibility when scrolling back up (just before fade-back-in)
+  brochureTl.set(brochureIntro, { visibility: 'visible', pointerEvents: 'auto' }, 0.075);
+
+  // Phase 2 (0.10 → 0.20): Brochure zooms in only AFTER intro is gone
+  brochureTl.to(brochureStage, {
+    scale: 1,
+    opacity: 1,
+    rotateX: 0,
+    duration: 0.10,
+    ease: 'power3.out'
+  }, 0.10);
+
+  // Each page flips during its slice of the timeline
+  const flipStart = 0.22;
+  const flipEnd = 0.82;
+  const flipRange = flipEnd - flipStart;
+  const perPage = flipRange / totalPages;
+
+  brochurePages.forEach((page, i) => {
+    const pageStart = flipStart + i * perPage;
+    brochureTl.to(page, {
+      rotateY: -180,
+      duration: perPage,
+      ease: 'power2.inOut',
+      onStart: () => {
+        page.style.zIndex = totalPages + 10;
+      },
+      onComplete: () => {
+        page.style.zIndex = i;
+      },
+      onReverseComplete: () => {
+        page.style.zIndex = totalPages - i;
+      }
+    }, pageStart);
+  });
+
+  // FINAL PHASE: Rail slides horizontally left, revealing outro from the right
+  brochureTl.to(brochureRail, {
+    x: '-100vw',
+    duration: 0.18,
+    ease: 'power3.inOut'
+  }, 0.82);
+
+  // HUD elements fade as we transition to outro
+  brochureTl.to([
+    '.brochure-hud',
+    '.brochure-counter-big',
+    '.brochure-progress-top'
+  ], {
+    opacity: 0,
+    duration: 0.10,
+    ease: 'power2.in'
+  }, 0.86);
+
+  /* ========== MARQUEE ========== */
+  const marqueeTrack = document.querySelector('.marquee-track');
+  const marqueeWidth = marqueeTrack.scrollWidth / 2;
+  const marqueeTween = gsap.to(marqueeTrack, {
+    x: -marqueeWidth,
+    duration: 30,
+    ease: 'none',
+    repeat: -1
+  });
+
+  ScrollTrigger.create({
+    trigger: '.marquee',
+    start: 'top bottom',
+    end: 'bottom top',
+    onUpdate: self => {
+      const v = self.getVelocity();
+      const ts = 1 + Math.min(Math.abs(v) / 800, 3);
+      gsap.to(marqueeTween, { timeScale: ts, duration: 0.5 });
+    }
+  });
+
+  /* ========== DRAGGABLE HORIZONTAL ========== */
+  const dragTrack = document.getElementById('dragTrack');
+  const dragWrap = document.querySelector('.drag-track-wrap');
+  const dragFill = document.querySelector('.drag-progress-fill');
+  const caseIndexEl = document.getElementById('caseIndex');
+
+  function getMaxDrag() {
+    return Math.max(0, dragTrack.scrollWidth - window.innerWidth + 40);
+  }
+
+  const cases = document.querySelectorAll('.case');
+
+  function updateDragProgress(x) {
+    const maxDrag = getMaxDrag();
+    const progress = maxDrag > 0 ? Math.abs(x) / maxDrag : 0;
+    dragFill.style.width = (progress * 100) + '%';
+    const idx = Math.min(cases.length, Math.floor(progress * cases.length) + 1);
+    caseIndexEl.textContent = String(idx).padStart(2, '0');
+  }
+
+  const draggable = Draggable.create(dragTrack, {
+    type: 'x',
+    inertia: false,
+    bounds: { minX: -getMaxDrag(), maxX: 0 },
+    edgeResistance: 0.85,
+    dragResistance: 0,
+    onPress() {
+      document.body.classList.add('dragging');
+      setCursorState('drag', 'DRAGGING');
+    },
+    onRelease() {
+      document.body.classList.remove('dragging');
+      setCursorState(null);
+    },
+    onDrag() {
+      updateDragProgress(this.x);
+    },
+    onThrowUpdate() {
+      updateDragProgress(this.x);
+    }
+  })[0];
+
+  // Wheel horizontal scroll inside the section
+  dragWrap.addEventListener('wheel', (e) => {
+    if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
+      // Only hijack if user is deliberately scrolling horizontal-intent
+      // Let vertical scroll pass through naturally
+      return;
+    }
+    e.preventDefault();
+    const newX = Math.max(-getMaxDrag(), Math.min(0, draggable.x - e.deltaX));
+    gsap.to(dragTrack, {
+      x: newX,
+      duration: 0.4,
+      ease: 'power2.out',
+      onUpdate: () => {
+        draggable.update();
+        updateDragProgress(gsap.getProperty(dragTrack, 'x'));
+      }
+    });
+  }, { passive: false });
+
+  // Arrow key navigation
+  let currentIdx = 0;
+  document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
+      const isInView = dragWrap.getBoundingClientRect().top < window.innerHeight && dragWrap.getBoundingClientRect().bottom > 0;
+      if (!isInView) return;
+      e.preventDefault();
+      currentIdx += e.key === 'ArrowRight' ? 1 : -1;
+      currentIdx = Math.max(0, Math.min(cases.length - 1, currentIdx));
+      const targetCase = cases[currentIdx];
+      const targetX = Math.max(-getMaxDrag(), -(targetCase.offsetLeft - 40));
+      gsap.to(dragTrack, {
+        x: targetX,
+        duration: 0.8,
+        ease: 'power3.out',
+        onUpdate: () => {
+          draggable.update();
+          updateDragProgress(gsap.getProperty(dragTrack, 'x'));
+        }
+      });
+    }
+  });
+
+  window.addEventListener('resize', () => {
+    draggable.applyBounds({ minX: -getMaxDrag(), maxX: 0 });
+  });
+
+  /* ========== REDACTION REVEAL ========== */
+  const redactBlocks = document.querySelectorAll('.redact-block');
+  const declassN = document.getElementById('declassN');
+  let revealedCount = 0;
+
+  redactBlocks.forEach((block, i) => {
+    ScrollTrigger.create({
+      trigger: block,
+      start: 'top 65%',
+      onEnter: () => {
+        block.classList.add('revealed');
+        revealedCount = document.querySelectorAll('.redact-block.revealed').length;
+        gsap.to({ v: parseInt(declassN.textContent) }, {
+          v: revealedCount,
+          duration: 0.5,
+          ease: 'power2.out',
+          onUpdate: function() {
+            declassN.textContent = Math.round(this.targets()[0].v);
+          }
+        });
+      },
+      onLeaveBack: () => {
+        block.classList.remove('revealed');
+        revealedCount = document.querySelectorAll('.redact-block.revealed').length;
+        declassN.textContent = revealedCount;
+      }
+    });
+  });
+
+  /* ========== COMPARISON SLIDER ========== */
+  const compSlider = document.getElementById('compSlider');
+  const compReality = compSlider.querySelector('.comparison-side.reality');
+  const compHandle = compSlider.querySelector('.comparison-handle');
+  let compDragging = false;
+  let compPos = 50;
+
+  function setComp(pct) {
+    pct = Math.max(0, Math.min(100, pct));
+    compPos = pct;
+    compReality.style.clipPath = `inset(0 0 0 ${pct}%)`;
+    compHandle.style.left = pct + '%';
+  }
+  setComp(50);
+
+  function compMove(clientX) {
+    const rect = compSlider.getBoundingClientRect();
+    const pct = ((clientX - rect.left) / rect.width) * 100;
+    setComp(pct);
+  }
+
+  compSlider.addEventListener('mousedown', e => {
+    compDragging = true;
+    setCursorState('drag', 'DRAG');
+    compMove(e.clientX);
+  });
+  compSlider.addEventListener('mouseenter', () => {
+    if (!compDragging) setCursorState('active', 'DRAG ↔');
+  });
+  compSlider.addEventListener('mouseleave', () => {
+    if (!compDragging) setCursorState(null);
+  });
+  window.addEventListener('mousemove', e => {
+    if (compDragging) compMove(e.clientX);
+  });
+  window.addEventListener('mouseup', () => {
+    if (compDragging) {
+      compDragging = false;
+      setCursorState(null);
+    }
+  });
+
+  // Touch
+  compSlider.addEventListener('touchstart', e => {
+    compDragging = true;
+    compMove(e.touches[0].clientX);
+  });
+  window.addEventListener('touchmove', e => {
+    if (compDragging) compMove(e.touches[0].clientX);
+  });
+  window.addEventListener('touchend', () => { compDragging = false; });
+
+  // Auto-animate on first scroll into view
+  ScrollTrigger.create({
+    trigger: compSlider,
+    start: 'top 70%',
+    once: true,
+    onEnter: () => {
+      gsap.fromTo({ p: 50 }, { p: 50 }, {
+        p: 75,
+        duration: 1.5,
+        ease: 'power2.inOut',
+        yoyo: true,
+        repeat: 1,
+        onUpdate: function() {
+          if (!compDragging) setComp(this.targets()[0].p);
+        }
+      });
+    }
+  });
+
+  /* ========== STATS COUNTER ========== */
+  document.querySelectorAll('.stat-item').forEach(stat => {
+    const target = parseInt(stat.querySelector('[data-count]').dataset.count);
+    const counter = stat.querySelector('.count');
+    ScrollTrigger.create({
+      trigger: stat,
+      start: 'top 80%',
+      once: true,
+      onEnter: () => {
+        gsap.to({ v: 0 }, {
+          v: target,
+          duration: 2,
+          ease: 'power2.out',
+          onUpdate: function() {
+            const val = Math.round(this.targets()[0].v);
+            counter.textContent = val.toLocaleString();
+          }
+        });
+      }
+    });
+  });
+
+  /* ========== REVEAL ========== */
+  document.querySelectorAll('[data-reveal]').forEach(el => {
+    gsap.to(el, {
+      opacity: 1, y: 0,
+      duration: 1, ease: 'power3.out',
+      scrollTrigger: {
+        trigger: el,
+        start: 'top 85%',
+        toggleActions: 'play none none reverse'
+      }
+    });
+  });
+
+  document.querySelectorAll('[data-reveal-stagger]').forEach(container => {
+    gsap.to(container.children, {
+      opacity: 1, y: 0,
+      duration: 0.8, stagger: 0.08,
+      ease: 'power3.out',
+      scrollTrigger: {
+        trigger: container,
+        start: 'top 85%',
+        toggleActions: 'play none none reverse'
+      }
+    });
+  });
+
+  gsap.fromTo('.manifesto-title',
+    { opacity: 0, y: 60 },
+    {
+      opacity: 1, y: 0,
+      duration: 1.2, ease: 'power3.out',
+      scrollTrigger: { trigger: '.manifesto-title', start: 'top 80%' }
+    }
+  );
+
+  /* ========== DOC PARALLAX ========== */
+  document.querySelectorAll('[data-parallax]').forEach(el => {
+    const speed = parseFloat(el.dataset.parallax);
+    gsap.to(el, {
+      y: () => -window.innerHeight * speed,
+      ease: 'none',
+      scrollTrigger: {
+        trigger: el.closest('.submit'),
+        start: 'top bottom',
+        end: 'bottom top',
+        scrub: 1
+      }
+    });
+  });
+
+  /* ========== MANIFESTO ITEMS — TILT ON HOVER ========== */
+  document.querySelectorAll('.m-item').forEach(item => {
+    item.addEventListener('mousemove', e => {
+      const rect = item.getBoundingClientRect();
+      const x = (e.clientX - rect.left) / rect.width - 0.5;
+      const y = (e.clientY - rect.top) / rect.height - 0.5;
+      gsap.to(item, {
+        rotateY: x * 6,
+        rotateX: -y * 6,
+        duration: 0.5,
+        ease: 'power2.out',
+        transformPerspective: 1000
+      });
+    });
+    item.addEventListener('mouseleave', () => {
+      gsap.to(item, {
+        rotateY: 0, rotateX: 0,
+        duration: 0.7,
+        ease: 'elastic.out(1, 0.5)'
+      });
+    });
+  });
+
+  /* ========== FOOTER ========== */
+  gsap.fromTo('.footer-huge',
+    { y: 100, opacity: 0 },
+    {
+      y: 0, opacity: 1,
+      duration: 1.2, ease: 'power4.out',
+      scrollTrigger: { trigger: 'footer', start: 'top 75%' }
+    }
+  );
+
+  /* ========== NAV HIDE/SHOW ========== */
+  let lastScroll = 0;
+  const nav = document.querySelector('nav');
+  window.addEventListener('scroll', () => {
+    const current = window.pageYOffset;
+    if (current > 200 && current > lastScroll) {
+      gsap.to(nav, { y: -100, duration: 0.4, ease: 'power2.out' });
+    } else {
+      gsap.to(nav, { y: 0, duration: 0.4, ease: 'power2.out' });
+    }
+    lastScroll = current;
+  });
+
+  /* ========== RESIZE ========== */
+  window.addEventListener('resize', () => {
+    ScrollTrigger.refresh();
+  });
+</script>
+
+</body>
+</html>
